@@ -5,11 +5,13 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 import numpy as np
+from numpy.linalg import norm
+from numpy import log10
 import plotly.graph_objects as go
 import plotly.express as px
 from dash.dependencies import Input, Output, State
-from scipy.optimize import fsolve
 import SupplementaryFiles.dash_reusable_components as drc
+
 
 t_start = 0
 mass = [1, 1, 1]
@@ -174,36 +176,36 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                                         name='Model',
                                         id="radios",
                                         options=[
-                                            {"label": "Simplified Model", "value": 1},
-                                            {"label": "Sun System", "value": 2},
+                                            {"label": " Simplified Model", "value": 1},
+                                            {"label": " Sun System", "value": 2},
                                         ],
                                         value=1,
                                         style={'margin': '10px 10px 10px 10px'},
                                     ),
                                     drc.NamedDropdown(
-                                        name='Steps',
-                                        id='n-dropdown',
+                                        name='Stepsize',
+                                        id='h-dropdown',
                                         options=[
                                             {
-                                                'label': 'n = 100',
-                                                'value': 100
+                                                'label': 'h = 0.01',
+                                                'value': 0.01
                                             },
                                             {
-                                                'label': 'n = 1000',
-                                                'value': 1000
+                                                'label': 'h = 0.001',
+                                                'value': 0.001
                                             },
                                             {
-                                                'label': 'n = 5 000',
-                                                'value': 5000
+                                                'label': 'h = 0.0005',
+                                                'value': 0.0005
                                             },
                                             {
-                                                'label': 'n = 10 000',
-                                                'value': 10000
+                                                'label': 'h = 0.0001',
+                                                'value': 0.0001
                                             },
                                         ],
                                         clearable=False,
                                         searchable=False,
-                                        value=1000,
+                                        value=0.01,
                                     ),
                                     drc.NamedSlider(
                                         name='Time',
@@ -215,6 +217,14 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                                                15: '15', 20: '20', 25: '25', 30: '30'},
                                         value=10
                                     ),
+                                    drc.NamedRadioItems(
+                                        name='Adaptive Step-Size',
+                                        id='ad_step pred-corr',
+                                        options=[{"label": " Yes", "value": 1},
+                                                 {"label": " No", "value": 0}],
+                                        value=0,
+                                        style={'margin': '10px 10px 10px 10px'},
+                                    )
                                 ]),
                             dbc.Tabs([
                                 dbc.Tab(label="Simplified Model", children=[
@@ -455,13 +465,6 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                                     dcc.Graph(
                                         id='corr-pred'
                                     ),
-                                    drc.NamedRadioItems(
-                                        name='Adaptive Step-Size',
-                                        id='ad_step pred-corr',
-                                        options=[{"label": "Yes", "value": 1},
-                                                 {"label": "No", "value": 0}],
-                                        value=0,
-                                    )
                                 ]
                             ),
                         ], width=4, align='center'),
@@ -478,7 +481,7 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
     Output(component_id='runge-kutta', component_property='figure'),
     Output(component_id='corr-pred', component_property='figure'),
     Input(component_id='radios', component_property='value'),
-    Input(component_id='n-dropdown', component_property='value'),
+    Input(component_id='h-dropdown', component_property='value'),
     Input(component_id='time', component_property='value'),
     Input(component_id='scenario-dropdown', component_property='value'),
     Input(component_id='simple_mass1', component_property='value'),
@@ -489,32 +492,30 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
     Input(component_id='object3-dropdown', component_property='value'),
     Input(component_id='ad_step pred-corr', component_property='value')
 )
-def update_figure(model, n, t_end, scenario, m1, m2, m3, o1, o2, o3, ad_step):
+def update_figure(model, h, t_end, scenario, m1, m2, m3, o1, o2, o3, ad_step):
     global mass
     global g
     if model == 1:
-        names = ['Objekt 1', 'Objekt 2', 'Objekt 3']
+        names = ['Object 1', 'Object 2', 'Object 3']
         colours = ['green', 'blue', 'red']
         init_data = init_dict[scenario]
         mass = [m1, m2, m3]
         g = 1
-        fig_expl = generate_figures(forward_euler(f, init_data, t_start, t_end, n), 'Explicit Euler Method',
+        fig_expl = generate_figures(forward_euler(f, init_data, t_start, t_end, h, ad_step), 'Explicit Euler Method',
                                     names,
                                     colours)
-        fig_rk = generate_figures(runge_kutta_4(f, init_data, t_start, t_end, n, ad_step),
-                                  'Runge-Kutta-Method of Order 3',
+        fig_rk = generate_figures(runge_kutta_4(f, init_data, t_start, t_end, h, ad_step),
+                                  'Runge-Kutta Method',
                                   names, colours)
         try:
-            fig_impl = generate_figures(backward_euler(f, init_data, t_start, t_end, n), 'Implicit Euler Method',
+            fig_impl = generate_figures(backward_euler(f, init_data, t_start, t_end, h, ad_step), 'Implicit Euler Method',
                                         names, colours)
         except:
             fig_impl = fig_not_convergent('Implicit Euler Method')
-        try:
-            fig_precor = generate_figures(predictor_corrector(f, init_data, t_start, t_end, n, ad_step),
+
+        fig_precor = generate_figures(predictor_corrector(f, init_data, t_start, t_end, h, ad_step),
                                           'Predictor-Corrector Method',
                                           names, colours)
-        except:
-            fig_precor = fig_not_convergent('Predictor-Corrector Method')
         return fig_expl, fig_impl, fig_rk, fig_precor
     elif model == 2:
         g = GG
@@ -522,17 +523,17 @@ def update_figure(model, n, t_end, scenario, m1, m2, m3, o1, o2, o3, ad_step):
         colours = [colour_dict[o1], colour_dict[o2], colour_dict[o3]]
         mass = np.array([mass_dict[o1], mass_dict[o2], mass_dict[o3]])
         init_data = np.array([[r_dict[o1], v_dict[o1]], [r_dict[o2], v_dict[o2]], [r_dict[o3], v_dict[o3]]])
-        fig_expl = generate_figures(forward_euler(f, init_data, t_start, t_end, n),
+        fig_expl = generate_figures(forward_euler(f, init_data, t_start, t_end, h, ad_step),
                                     'Explicit Euler Method', names, colours)
-        fig_rk = generate_figures(runge_kutta_4(f, init_data, t_start, t_end, n),
-                                  'Runge-Kutta-Method of Order 4 with adaptive step size', names, colours)
+        fig_rk = generate_figures(runge_kutta_4(f, init_data, t_start, t_end, h, ad_step),
+                                  'Runge-Kutta Method', names, colours)
         try:
-            fig_impl = generate_figures(backward_euler(f, init_data, t_start, t_end, n), 'Implicit Euler Method',
+            fig_impl = generate_figures(backward_euler(f, init_data, t_start, t_end, h, ad_step), 'Implicit Euler Method',
                                         names, colours)
         except:
             fig_impl = fig_not_convergent('Implicit Euler Method')
         try:
-            fig_precor = generate_figures(predictor_corrector(f, init_data, t_start, t_end, n, ad_step_pc),
+            fig_precor = generate_figures(predictor_corrector(f, init_data, t_start, t_end, h, ad_step),
                                           'Predictor-Corrector Method',
                                           names, colours)
         except:
@@ -541,34 +542,35 @@ def update_figure(model, n, t_end, scenario, m1, m2, m3, o1, o2, o3, ad_step):
 
 
 def f(t, y):
-    d0 = ((-g * mass[0] * mass[1] * (y[0] - y[1]) / np.linalg.norm(y[0] - y[1]) ** 3) +
-          (-g * mass[0] * mass[2] * (y[0] - y[2]) / np.linalg.norm(y[0] - y[2]) ** 3)) / mass[0]
-    d1 = ((-g * mass[1] * mass[2] * (y[1] - y[2]) / np.linalg.norm(y[1] - y[2]) ** 3) + (
-            -g * mass[1] * mass[0] * (y[1] - y[0]) / np.linalg.norm(y[1] - y[0]) ** 3)) / mass[1]
-    d2 = ((-g * mass[2] * mass[0] * (y[2] - y[0]) / np.linalg.norm(y[2] - y[0]) ** 3) + (
-            -g * mass[2] * mass[1] * (y[2] - y[1]) / np.linalg.norm(y[2] - y[1]) ** 3)) / mass[2]
+    d0 = ((-g * mass[0] * mass[1] * (y[0] - y[1]) / norm(y[0] - y[1]) ** 3) +
+          (-g * mass[0] * mass[2] * (y[0] - y[2]) / norm(y[0] - y[2]) ** 3)) / mass[0]
+    d1 = ((-g * mass[1] * mass[2] * (y[1] - y[2]) / norm(y[1] - y[2]) ** 3) + (
+            -g * mass[1] * mass[0] * (y[1] - y[0]) / norm(y[1] - y[0]) ** 3)) / mass[1]
+    d2 = ((-g * mass[2] * mass[0] * (y[2] - y[0]) / norm(y[2] - y[0]) ** 3) + (
+            -g * mass[2] * mass[1] * (y[2] - y[1]) / norm(y[2] - y[1]) ** 3)) / mass[2]
     return np.array([d0, d1, d2])
 
 
 def flong(y):
-    d00 = ((-g * mass[0] * mass[1] * (y[0] - y[2]) / np.linalg.norm([y[0] - y[2], y[1] - y[3]]) ** 3) +
-           (-g * mass[0] * mass[2] * (y[0] - y[4]) / np.linalg.norm([y[0] - y[4], y[1] - y[5]]) ** 3)) / mass[0]
-    d01 = ((-g * mass[0] * mass[1] * (y[1] - y[3]) / np.linalg.norm([y[0] - y[2], y[1] - y[3]]) ** 3) + (
-            -g * mass[0] * mass[2] * (y[1] - y[5]) / np.linalg.norm([y[0] - y[4], y[1] - y[5]]) ** 3)) / mass[0]
-    d10 = ((-g * mass[1] * mass[2] * (y[2] - y[4]) / np.linalg.norm([y[2] - y[4], y[3] - y[5]]) ** 3) + (
-            -g * mass[1] * mass[0] * (y[2] - y[0]) / np.linalg.norm([y[0] - y[2], y[1] - y[3]]) ** 3)) / mass[1]
-    d11 = ((-g * mass[1] * mass[2] * (y[3] - y[5]) / np.linalg.norm([y[2] - y[4], y[3] - y[5]]) ** 3) + (
-            -g * mass[1] * mass[0] * (y[3] - y[1]) / np.linalg.norm([y[0] - y[2], y[1] - y[3]]) ** 3)) / mass[1]
-    d20 = ((-g * mass[2] * mass[0] * (y[4] - y[0]) / np.linalg.norm([y[0] - y[4], y[1] - y[5]]) ** 3) + (
-            -g * mass[2] * mass[1] * (y[4] - y[2]) / np.linalg.norm([y[2] - y[4], y[3] - y[5]]) ** 3)) / mass[2]
-    d21 = ((-g * mass[2] * mass[0] * (y[5] - y[1]) / np.linalg.norm([y[0] - y[4], y[1] - y[5]]) ** 3) + (
-            -g * mass[2] * mass[1] * (y[5] - y[3]) / np.linalg.norm([y[2] - y[4], y[3] - y[5]]) ** 3)) / mass[2]
+    d00 = ((-g * mass[0] * mass[1] * (y[0] - y[2]) / norm([y[0] - y[2], y[1] - y[3]]) ** 3) +
+           (-g * mass[0] * mass[2] * (y[0] - y[4]) / norm([y[0] - y[4], y[1] - y[5]]) ** 3)) / mass[0]
+    d01 = ((-g * mass[0] * mass[1] * (y[1] - y[3]) / norm([y[0] - y[2], y[1] - y[3]]) ** 3) + (
+            -g * mass[0] * mass[2] * (y[1] - y[5]) / norm([y[0] - y[4], y[1] - y[5]]) ** 3)) / mass[0]
+    d10 = ((-g * mass[1] * mass[2] * (y[2] - y[4]) / norm([y[2] - y[4], y[3] - y[5]]) ** 3) + (
+            -g * mass[1] * mass[0] * (y[2] - y[0]) / norm([y[0] - y[2], y[1] - y[3]]) ** 3)) / mass[1]
+    d11 = ((-g * mass[1] * mass[2] * (y[3] - y[5]) / norm([y[2] - y[4], y[3] - y[5]]) ** 3) + (
+            -g * mass[1] * mass[0] * (y[3] - y[1]) / norm([y[0] - y[2], y[1] - y[3]]) ** 3)) / mass[1]
+    d20 = ((-g * mass[2] * mass[0] * (y[4] - y[0]) / norm([y[0] - y[4], y[1] - y[5]]) ** 3) + (
+            -g * mass[2] * mass[1] * (y[4] - y[2]) / norm([y[2] - y[4], y[3] - y[5]]) ** 3)) / mass[2]
+    d21 = ((-g * mass[2] * mass[0] * (y[5] - y[1]) / norm([y[0] - y[4], y[1] - y[5]]) ** 3) + (
+            -g * mass[2] * mass[1] * (y[5] - y[3]) / norm([y[2] - y[4], y[3] - y[5]]) ** 3)) / mass[2]
     return np.array([d00, d01, d10, d11, d20, d21])
 
 
 eps = 1e-15
 
-'''def forward_euler(f, y0, t0, t1, N):
+
+def forward_euler(f, y0, t0, t1, h, ad_step):
     """
     Explicit Euler method for systems of differential equations: y' = f(t, y); with f,y,y' n-dimensional vectors.
     :param f: list of functions
@@ -578,34 +580,6 @@ eps = 1e-15
     :param h: float or int, step-size
     :return: two lists of floats, approximation of y at interval t0-t1 in step-size h and interval list
     """
-    h = (t1 - t0) / N
-    t = t0
-    v = np.zeros((len(y0), N + 1, 2))
-    y = np.zeros((len(y0), N + 1, 2))
-    t_list = [0] * (N + 1)
-    t_list[0] = t0
-    v[:, 0, :] = y0[:, 1, :]
-    y[:, 0, :] = y0[:, 0, :]
-    for k in range(N):
-        for i in range(len(y0)):
-            y[i, k + 1, :] = y[i, k, :] + h * v[i, k, :]
-            v[i, k + 1, :] = v[i, k, :] + h * f(t, y[:, k, :])[i]
-        t = t + h
-        t_list[k + 1] = t
-    return y, t'''
-
-
-def forward_euler(f, y0, t0, t1, N):
-    """
-    Explicit Euler method for systems of differential equations: y' = f(t, y); with f,y,y' n-dimensional vectors.
-    :param f: list of functions
-    :param y0: list of floats or ints, initial values y(t0)=y0
-    :param t0: float or int, start of interval for parameter t
-    :param t1: float or int, end of interval for parameter t
-    :param h: float or int, step-size
-    :return: two lists of floats, approximation of y at interval t0-t1 in step-size h and interval list
-    """
-    h = (t1 - t0) / N
     h_min = h / 256
     h_max = h
     h_sum = 0
@@ -613,37 +587,44 @@ def forward_euler(f, y0, t0, t1, N):
     t = t0
     v = np.zeros((len(y0), 1000000, 2))
     y = np.zeros((len(y0), 1000000, 2))
-    t_list = [0] * (N + 1)
-    t_list[0] = t0
     v[:, 0, :] = y0[:, 1, :]
     y[:, 0, :] = y0[:, 0, :]
+    max_error = 0
 
     while h_sum < t1 and k < 50000:
-        for i in range(len(y0)):
-            y[i, k + 1, :] = y[i, k, :] + h * v[i, k, :]
-            v[i, k + 1, :] = v[i, k, :] + h * f(t, y[:, k, :])[i]
-        energy = np.linalg.norm(
-            mass[0] * f(t, y[:, k, :])[0] + mass[1] * f(t, y[:, k, :])[1] + mass[2] * f(t, y[:, k, :])[2])
 
-        if abs(energy) < eps:
-            k = k + 1
-            h_sum = h_sum + h
-            if abs(energy) < eps ** 2 and h < h_max:
-                h = h * 2
-        elif h > h_min:
-            h = h * 0.5
+        y[:, k + 1, :] = y[:, k, :] + h * v[:, k, :] #+ h**2 * 0.5 * f(t, y[:, k, :])
+        v[:, k + 1, :] = v[:, k, :] + h * f(t, y[:, k, :])
+
+        energy = norm(
+            (mass[0] * f(t, y[:, k, :])[0] + mass[1] * f(t, y[:, k, :])[1] + mass[2] * f(t, y[:, k, :])[2]))
+
+        if energy > max_error:
+            max_error = energy
+
+        if ad_step == 1:
+
+            if abs(energy) < eps:
+                k = k + 1
+                h_sum = h_sum + h
+                if abs(energy) < eps ** 2 and h < h_max:
+                    h = h * 2
+            elif h > h_min:
+                h = h * 0.5
+            else:
+                k = k + 1
+                h_sum = h_sum + h
         else:
-            k = k + 1
-            h_sum = h_sum + h
-            #print('h zu klein')
-        t = t + h
+            k += 1
+            h_sum += h
 
     y = y[:, :k + 1, :]
-    print(k)
-    return y, t
+    print('Forward Euler k: ', k)
+    print('Maximaler Error Forward Euler: ', max_error)
+    return y, max_error
 
 
-def runge_kutta(f, y0, t0, t1, N):
+def runge_kutta(f, y0, t0, t1, h):
     """
     Explicit Euler method for systems of differential equations: y' = f(t, y); with f,y,y' n-dimensional vectors.
     :param f: list of functions
@@ -653,7 +634,7 @@ def runge_kutta(f, y0, t0, t1, N):
     :param h: float or int, step-size
     :return: two lists of floats, approximation of y at interval t0-t1 in step-size h and interval list
     """
-    h = (t1 - t0) / N
+    N = int(np.ceil((t1 - t0) / h))
     t = t0
     v = np.zeros((len(y0), N + 1, 2))
     y = np.zeros((len(y0), N + 1, 2))
@@ -673,7 +654,7 @@ def runge_kutta(f, y0, t0, t1, N):
             y[i, k + 1] = y[i, k, :] + h / 6 * (k12 + 4 * k22 + k32)
         t = t + h
         t_list[k + 1] = t
-    return y, t_list
+    return y
 
 
 A = np.array([0, 2 / 9, 1 / 3, 3 / 4, 1, 5 / 6])
@@ -684,7 +665,7 @@ CH = np.array([47 / 450, 0, 12 / 25, 32 / 225, 1 / 30, 6 / 25])
 CT = np.array([-1 / 150, 0, 3 / 100, -16 / 75, -1 / 20, 6 / 25])
 
 
-def runge_kutta_4(f, y0, t0, t1, N, ad_step):
+def runge_kutta_4(f, y0, t0, t1, h, ad_step):
     """
     Explicit Euler method for systems of differential equations: y' = f(t, y); with f,y,y' n-dimensional vectors.
     :param f: list of functions
@@ -694,21 +675,26 @@ def runge_kutta_4(f, y0, t0, t1, N, ad_step):
     :param h: float or int, step-size
     :return: two lists of floats, approximation of y at interval t0-t1 in step-size h and interval list
     """
-    h = (t1 - t0) / N
-    h_min = h / 256
+    h_min = h / 16
     h_max = h
     h_sum = 0
-    eps = 1e-4
+    eps = 1e-16
     t = t0
-    v = np.zeros((len(y0), 50000, 2))
-    y = np.zeros((len(y0), 50000, 2))
-    t_list = [0] * (N + 1)
-    t_list[0] = t0
+    v = np.zeros((len(y0), 50001, 2))
+    y = np.zeros((len(y0), 50001, 2))
     v[:, 0, :] = y0[:, 1, :]
     y[:, 0, :] = y0[:, 0, :]
     k = 0
+    max_err = 0
     while k < 50000 and h_sum < t1:
         i = 0
+
+        l1_all = np.zeros((3, 2))
+        l2_all = np.zeros((3, 2))
+        l3_all = np.zeros((3, 2))
+        l4_all = np.zeros((3, 2))
+        l5_all = np.zeros((3, 2))
+        l6_all = np.zeros((3, 2))
 
         while i < (len(y0)):
             k1 = h * f(t + A[0] * h, y[:, k, :])[i]
@@ -727,30 +713,44 @@ def runge_kutta_4(f, y0, t0, t1, N, ad_step):
             l5 = v[i, k, :] + B[4, 0] * k1 + B[4, 1] * k2 + B[4, 2] * k3 + B[4, 3] * k4
             l6 = v[i, k, :] + B[5, 0] * k1 + B[5, 1] * k2 + B[5, 2] * k3 + B[5, 3] * k4 + B[5, 4] * k5
             y[i, k + 1] = y[i, k] + h * CH[0] * l1 + h * CH[1] * l2 + h * CH[2] * l3 + h * CH[3] * l4 + h * CH[
-                4] * l5 + h * CH[5] * l6
+                4] * l5 + h * CH[5] * l6 + h**2 * 0.5 * f(t, y[:, k, :])[i]
 
-            TE = np.linalg.norm(CT[0] * l1 + CT[1] * l2 + CT[2] * l3 + CT[3] * l4 + CT[4] * l5 + CT[5] * l6)
+            l1_all[i, :] = l1
+            l2_all[i, :] = l2
+            l3_all[i, :] = l3
+            l4_all[i, :] = l4
+            l5_all[i, :] = l5
+            l6_all[i, :] = l6
 
-            if ad_step == 1:
+            i += 1
 
-                if TE < eps:
-                    i = i + 1
-                    if TE < eps ** 2 and h < h_max:
-                        h = h * 2
-                elif TE > eps and h > h_min:
-                    h = h * 0.5
-                else:
-                    i = i + 1
+        TE = norm(
+            CT[0] * l1_all + CT[1] * l2_all + CT[2] * l3_all + CT[3] * l4_all + CT[4] * l5_all + CT[5] * l6_all)
+        if TE > max_err:
+            max_err = TE
+
+        if ad_step == 1:
+
+            if TE < eps:
+                k += 1
+                h_sum = h_sum + h
+                if TE < eps ** 2 and h < h_max:
+                    h = h * 1.1
+            elif TE > eps and h > h_min:
+                h = h * 0.9 * (eps / TE) ** 0.2
             else:
-                i += 1
+                k += 1
+                h_sum = h_sum + h
 
-        k = k + 1
-        h_sum = h_sum + h
+        else:
+            k += 1
+            h_sum = h_sum + h
 
     print('RK4 k: ', k)
+    print('Maximaler Error RKF: ', max_err)
 
     y = y[:, :k + 1, :]
-    return y, t_list
+    return y, max_err
 
 
 def newton_raphson(f, g, x0, e, N):
@@ -783,7 +783,7 @@ def newton_raphson(f, g, x0, e, N):
         print('\nNot Convergent.')
 
 
-def backward_euler(f, y0, t0, t1, N):
+def backward_euler(f, y0, t0, t1, h, ad_step):
     """
     Explicit Euler method for systems of differential equations: y' = f(t, y); with f,y,y' n-dimensional vectors.
     :param f: list of functions
@@ -793,19 +793,18 @@ def backward_euler(f, y0, t0, t1, N):
     :param h: float or int, step-size
     :return: two lists of floats, approximation of y at interval t0-t1 in step-size h and interval list
     """
-    h = (t1 - t0) / N
     h_min = h / 256
     h_max = h
     h_sum = 0
-    k = 0
-    v = np.zeros((len(y0), N+1, 2))
-    y = np.zeros((len(y0), N+1, 2))
-    t_list = [0] * (N + 1)
-    t_list[0] = t0
-    t = t0
+    k = 1
+    v = np.zeros((len(y0), 50001, 2))
+    y = np.zeros((len(y0), 50001, 2))
     v[:, 0, :] = y0[:, 1, :]
     y[:, 0, :] = y0[:, 0, :]
-    for k in range(1, N + 1):
+    eps = 5e-16
+    t = t0
+    max_error = 0
+    while k < 50000 and h_sum < t1:
 
         for i in range(len(y0)):
 
@@ -813,7 +812,7 @@ def backward_euler(f, y0, t0, t1, N):
                 terms = []
                 for j in range(len(x)):
                     if j != i:
-                        term = (-g * mass[0] * mass[1] * (x[i, :] - x[j, :]) / np.linalg.norm(x[i, :] - x[j, :]) ** 3) / \
+                        term = (-g * mass[0] * mass[1] * (x[i, :] - x[j, :]) / norm(x[i, :] - x[j, :]) ** 3) / \
                                mass[i]
                         terms.append(term)
 
@@ -824,19 +823,43 @@ def backward_euler(f, y0, t0, t1, N):
                 for j in range(len(x)):
                     if j != i:
                         term = (g * mass[0] * mass[1] * (
-                                2 * x[i, :] ** 2 - 3 * x[i, :] * x[j, :] + x[j, :] ** 2) / np.linalg.norm(
+                                2 * x[i, :] ** 2 - 3 * x[i, :] * x[j, :] + x[j, :] ** 2) / norm(
                             x[i, :] - x[j, :]) ** (5 / 2)) / mass[i]
                         terms.append(term)
                 return h * (terms[0] + terms[1]) - 1
 
             v[i, k, :] = newton_raphson(fixpoint, fixpoint_deriv, y[:, k - 1, :], 0.0001, 5)[i, :]
-            y[i, k, :] = y[i, k - 1, :] + h * v[i, k - 1, :] + h ** 2 * 0.5 * f(t, y[:, k - 1, :])[i]
-        t = t + h
-        t_list[k] = t
-    return y, t_list
+            y[i, k, :] = y[i, k - 1, :] + h * v[i, k - 1, :] #+ h ** 2 * 0.5 * f(t, y[:, k - 1, :])[i]
+
+        energy = norm(
+            mass[0] * f(t, y[:, k, :])[0] + mass[1] * f(t, y[:, k, :])[1] + mass[2] * f(t, y[:, k, :])[2])
+        if energy > max_error:
+            max_error = energy
+
+        if ad_step == 1:
+
+            if abs(energy) < eps:
+                k = k + 1
+                h_sum = h_sum + h
+                if abs(energy) < eps * 0.5 and h < h_max:
+                    h = h * 2
+            elif abs(energy) > eps and h > h_min:
+                h = h * 0.5
+            else:
+                k = k + 1
+                h_sum = h_sum + h
+        else:
+            k += 1
+            h_sum += h
+
+    y = y[:, :k, :]
+    print('Backward Euler k: ', k)
+    print('Maximaler Error Backward Euler: ', max_error)
+
+    return y, max_error
 
 
-def predictor_corrector(f, y0, t0, t1, N, ad_step):
+def predictor_corrector(f, y0, t0, t1, h, ad_step):
     """
     Explicit Euler method for systems of differential equations: y' = f(t, y); with f,y,y' n-dimensional vectors.
     :param f: list of functions
@@ -846,127 +869,53 @@ def predictor_corrector(f, y0, t0, t1, N, ad_step):
     :param h: float or int, step-size
     :return: two lists of floats, approximation of y at interval t0-t1 in step-size h and interval list
     """
-    h = (t1 - t0) / N
     v = np.zeros((len(y0), 1000000, 2))
     y = np.zeros((len(y0), 1000000, 2))
-    t_list = [0] * (N + 2)
-    t_list[0] = t0
     t = t0
     v[:, 0, :] = y0[:, 1, :]
     y[:, 0, :] = y0[:, 0, :]
     h_sum = 0
-    h_min = h * 0.1
+    h_min = h / 256
+    h_max = h
     k = 1
+    errlist = [0]
     while h_sum < t1 and k < 50000:
 
-        vp = v[:, k - 1, :] + h * f(t, y[:, k - 1, :])
-        yp = y[:, k - 1, :] + h * v[:, k - 1, :] + h ** 2 * 0.5 * f(t, y[:, k - 1, :])
+        y_pre = y[:, k - 1, :] + h * v[:, k - 1, :] + h ** 2 * 0.5 * f(t, y[:, k - 1, :])
 
         for i in range(len(y0)):
+            v[i, k, :] = v[i, k - 1, :] + h * f(t, y_pre)[i]
+            y[i, k, :] = y[i, k - 1, :] + h * v[i, k - 1, :]
 
-            def fixpoint(x):
-                terms = []
-                for j in range(len(x)):
-                    if j != i:
-                        term = (-g * mass[0] * mass[1] * (x[i, :] - x[j, :]) / np.linalg.norm(x[i, :] - x[j, :]) ** 3) / \
-                               mass[i]
-                        terms.append(term)
-                return v[i, k - 1, :] + h * (terms[0] + terms[1]) - x[i, :]
-
-            def fixpoint_deriv(x):
-                terms = []
-                for j in range(len(x)):
-                    if j != i:
-                        term = (g * mass[0] * mass[1] * (
-                                2 * x[i, :] ** 2 - 3 * x[i, :] * x[j, :] + x[j, :] ** 2) / np.linalg.norm(
-                            x[i, :] - x[j, :]) ** (5 / 2)) / mass[i]
-                        terms.append(term)
-                return h * (terms[0] + terms[1]) - 1
-
-            vc = newton_raphson(fixpoint, fixpoint_deriv, yp, 0.01, 10)[i, :]
-
-            v[i, k, :] = vc
-            y[i, k, :] = y[i, k - 1, :] + h * v[i, k - 1, :] + h ** 2 * 0.5 * f(t, y[:, k - 1, :])[i]
+        err = norm(
+            mass[0] * f(t, y[:, k, :])[0] + mass[1] * f(t, y[:, k, :])[1] + mass[2] * f(t, y[:, k, :])[2])
+        errlist.append(err)
 
         if ad_step == 1:
-            err = np.linalg.norm(vp - v[:, k, :])
-
-            if err > eps and h > h_min:
-                h = h * 0.9
-            elif err < eps ** 2:
-                h_new = h * 1.1
-                h = h_new
+            if err < eps:
+                k = k + 1
+                h_sum = h_sum + h
+                if err < eps ** 2 and h < h_max:
+                    h = h * 2
+            elif err > eps and h > h_min:
+                h = h * 0.5
             else:
                 k = k + 1
-                h_sum += h
+                h_sum = h_sum + h
+                # print('h zu klein')
         else:
             k = k + 1
             h_sum += h
 
         t = t + h
-        # t_list[k] = t
-    y = y[:, :k + 1, :]
-    return y, t_list
-
-
-def fpi(f, t, yk, h, steps):
-    x = yk
-    while steps > 0:
-        x = (1 + h) * x + h ** 2 * f(t, x)
-        steps += -1
-    return x
-
-
-def backward_euler_0(f, y0, t0, t1, N):
-    h = (t1 - t0) / N
-    t = t0
-    v = np.zeros((len(y0), N + 1, 2))
-    y = np.zeros((len(y0), N + 1, 2))
-    t_list = [0] * (N + 1)
-    t_list[0] = t0
-    v[:, 0, :] = y0[:, 1, :]
-    y[:, 0, :] = y0[:, 0, :]
-    for k in range(N):
-        v[:, k + 1, :] = fpi(f, t, y[:, k, :], h, 5)
-        y[:, k + 1, :] = y[:, k, :] + h * v[:, k, :]
-        t = t + h
-        t_list[k + 1] = t
-    return y, t_list
-
-
-def backward_euler_equation(y, yn, h, f):
-    ret = y - yn - h * f(y)
-    return ret
-
-
-def backward_euler_scipy(f, y0, t0, t1, N):
-    h = (t1 - t0) / N
-    t = t0
-    v = np.zeros((N + 1, 6))
-    y = np.zeros((N + 1, 6))
-    y_start = y0[:, 0, :]
-    v_start = y0[:, 1, :]
-    y0_reshape = y_start.reshape(6, )
-    v0_reshape = v_start.reshape(6, )
-    t_list = [0] * (N + 1)
-    t_list[0] = t0
-    v[0, :] = v0_reshape
-    y[0, :] = y0_reshape
-
-    for k in range(N):
-        v[k + 1, :] = fsolve(backward_euler_equation, y[k, :], (y[k, :], h, flong))
-        y[k + 1, :] = y[k, :] + h * v[k, :]
-        t = t + h
-        t_list[k + 1] = t
-
-    y_ret = np.zeros((len(y0), N + 1, 2))
-    y_ret[:, :, 0] = y[:, ::2].transpose()
-    y_ret[:, :, 1] = y[:, 1::2].transpose()
-    return y_ret, t_list
+    y = y[:, 1:k, :]
+    print('PK k: ', k)
+    max_error = max(errlist)
+    return y, max_error
 
 
 def generate_figures(method, title, names, colours):
-    y, t = method
+    y, err = method
     fig = go.Figure(
         data=[go.Scatter(x=y[0, :, 0], y=y[0, :, 1],
                          mode="lines", name=names[0],
@@ -986,7 +935,7 @@ def generate_figures(method, title, names, colours):
 
 
 def generate_error_figures(method, title, names, colours):
-    y_rk, t_rk = runge_kutta(f, inits1, 0, 10, 0.01)
+    y_rk = runge_kutta_4(f, inits1, 0, 10, 0.01)
     y_meth, t_meth = method
     y = np.absolute(y_rk - y_meth)
     fig = go.Figure(
@@ -1011,6 +960,46 @@ def fig_not_convergent(title):
     fig = px.scatter(x=[1, 1, 1, 1, 1, 1, 1, 1], y=[3, 2.75, 2.5, 2.25, 2, 1.75, 1.5, 0.75],
                      title=str(title + ': not convergent'))
     return fig
+
+
+"""y, errFE1 = forward_euler(f, inits3, 0, 10, 0.01, 1)
+y, errFE2 = forward_euler(f, inits3, 0, 10, 0.001, 1)
+y, errBE1 = backward_euler(f, inits3, 0, 10, 0.01, 1)
+y, errBE2 = backward_euler(f, inits3, 0, 10, 0.001, 1)
+y, errRK1 = runge_kutta_4(f, inits3, 0, 10, 0.01, 1)
+y, errRK2 = runge_kutta_4(f, inits3, 0, 10, 0.001, 1)
+y, errPK1 = predictor_corrector(f, inits3, 0, 10, 0.01, 1)
+y, errPK2 = predictor_corrector(f, inits3, 0, 10, 0.001, 1)
+
+convOrdFE = log10(errFE2/errFE1)
+convOrdBE = log10(errBE2/errBE1)
+convOrdRK = log10(errRK2/errRK1)
+convOrdPK = log10(errPK2/errPK1)
+
+print('Konvergenzordnung Expl. Euler: ', convOrdFE)
+print('Konvergenzordnung Impl. Euler: ', convOrdBE)
+print('Konvergenzordnung RKF: ', convOrdRK)
+print('Konvergenzordnung PK: ', convOrdPK)"""
+
+
+def array_to_csv(y, name):
+    x0 = y[0, :, 0]
+    y0 = y[0, :, 1]
+    x1 = y[1, :, 0]
+    y1 = y[1, :, 1]
+    x2 = y[2, :, 0]
+    y2 = y[2, :, 1]
+    df = pd.DataFrame([x0, y0, x1, y1, x2, y2], index=['Body 1, x-Axis', 'Body 1, y-Axis', 'Body 2, x-Axis',
+                                                         'Body 2, y-Axis', 'Body 3, x-Axis', 'Body 3, y-Axis'])
+    df = df.transpose()
+    df.to_csv(name)
+    return df
+
+
+"""y_python_1000, t = predictor_corrector(f, inits3, 0, 10, 1000, 0)
+y_python_10000, t = predictor_corrector(f, inits3, 0, 10, 10000, 0)
+array_to_csv(y_python_1000, 'PredCorr_0-10_1000.csv')
+array_to_csv(y_python_10000, 'PredCorr-10_10000.csv')"""
 
 
 if __name__ == '__main__':

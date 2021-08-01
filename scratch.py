@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.linalg import norm
 
 mass = [1,1,1]
 g = 1
@@ -88,6 +89,7 @@ def runge_kutta_4(f, y0, t0, t1, h):
         t_list[k + 1] = t
     return y, t_list
 
+
 def newton_raphson(f, g, x0, e, N):
     """
     Numerical solver of the equation f(x) = 0
@@ -102,6 +104,8 @@ def newton_raphson(f, g, x0, e, N):
     flag = 1
     condition = True
     while condition:
+        print(x0)
+        print(f(x0))
         if np.all(g(x0) == 0.0):
             print('Divide by zero error!')
             break
@@ -115,6 +119,7 @@ def newton_raphson(f, g, x0, e, N):
     if flag == 1:
         return x1
     else:
+        return x1
         print('\nNot Convergent.')
 
 
@@ -129,20 +134,21 @@ def predictor_corrector(f, y0, t0, t1, N, ad_step):
     :return: two lists of floats, approximation of y at interval t0-t1 in step-size h and interval list
     """
     h = (t1 - t0) / N
-    v = np.zeros((len(y0), 1000000, 2))
-    y = np.zeros((len(y0), 1000000, 2))
+    v = np.zeros((len(y0), 100000, 2))
+    y = np.zeros((len(y0), 100000, 2))
     t_list = [0] * (N + 2)
     t_list[0] = t0
     t = t0
     v[:, 0, :] = y0[:, 1, :]
     y[:, 0, :] = y0[:, 0, :]
     h_sum = 0
-    h_min = h*0.1
+    h_min = h / 16
+    h_max = h
     k = 1
     while h_sum < t1 and k < 50000:
 
         vp = v[:, k - 1, :] + h * f(t, y[:, k - 1, :])
-        yp = y[:, k - 1, :] + h * v[:, k - 1, :] + h ** 2 * 0.5 * f(t, y[:, k-1, :])
+        yp = y[:, k - 1, :] + h * v[:, k - 1, :] + h ** 2 * 0.5 * f(t, y[:, k - 1, :])
 
         for i in range(len(y0)):
 
@@ -165,7 +171,7 @@ def predictor_corrector(f, y0, t0, t1, N, ad_step):
                         terms.append(term)
                 return h * (terms[0] + terms[1]) - 1
 
-            vc = newton_raphson(fixpoint, fixpoint_deriv, yp, 0.001, 10)[i, :]
+            vc = newton_raphson(fixpoint, fixpoint_deriv, vp, 0.001, 5)[i, :]
 
             v[i, k, :] = vc
             y[i, k, :] = y[i, k - 1, :] + h * v[i, k - 1, :] + h ** 2 * 0.5 * f(t, y[:, k - 1, :])[i]
@@ -174,20 +180,19 @@ def predictor_corrector(f, y0, t0, t1, N, ad_step):
             err = np.linalg.norm(vp - v[:, k, :])
 
             if err > eps and h > h_min:
-                h = h * 0.9
-            elif err < eps ** 2:
-                h_new = h * 1.1
-                h = h_new
+                h = h * 0.5
+            elif err < eps ** 2 and h < h_max:
+                h = h * 2
             else:
                 k = k + 1
                 h_sum += h
         else:
             k = k + 1
             h_sum += h
+        print(k)
 
-        t = t + h
-        #t_list[k] = t
-    y = y[:, :k + 1, :]
+    print('Prädiktor Korrektor k: ', k, h_sum)
+    y = y[:, :k, :]
     return y, t_list
 
 
@@ -240,6 +245,362 @@ def forward_euler(f, y0, t0, t1, N):
     return y, t
 
 
-y, t = forward_euler(f, inits3, 0, 10, 1000)
+def fixpunkt(x, v, h, t):
+    return v + h * f(t, x)
+
+
+def backward_euler_2(f, y0, t0, t1, h, ad_step):
+    """
+    Explicit Euler method for systems of differential equations: y' = f(t, y); with f,y,y' n-dimensional vectors.
+    :param f: list of functions
+    :param y0: list of floats or ints, initial values y(t0)=y0
+    :param t0: float or int, start of interval for parameter t
+    :param t1: float or int, end of interval for parameter t
+    :param h: float or int, step-size
+    :return: two lists of floats, approximation of y at interval t0-t1 in step-size h and interval list
+    """
+    h_min = h / 256
+    h_max = h
+    h_sum = 0
+    k = 1
+    v = np.zeros((len(y0), 50001, 2))
+    y = np.zeros((len(y0), 50001, 2))
+    v[:, 0, :] = y0[:, 1, :]
+    y[:, 0, :] = y0[:, 0, :]
+    eps = 5e-16
+    t = t0
+    max_error = 0
+    while k < 50000 and h_sum < t1:
+        y[:, k, :] = y[:, k-1, :] + h * v[:, k-1, :] + h**2 * 0.5 * f(t, y[:, k-1, :])
+
+        n = 0
+        x0 = v[:, k-1, :]
+        x1 = fixpunkt(x0, v[:, k-1, :], h, t)
+        while np.linalg.norm(x1 - x0) > 0.0001 and n < 10:
+            x0 = x1
+            x1 = fixpunkt(x0, v[:, k-1, :], h, t)
+            n += 1
+
+        v[:, k, :] = x1
+
+        energy = np.linalg.norm(
+            mass[0] * f(t, y[:, k, :])[0] + mass[1] * f(t, y[:, k, :])[1] + mass[2] * f(t, y[:, k, :])[2])
+        if energy > max_error:
+            max_error = energy
+
+        if ad_step == 1:
+
+            if abs(energy) < eps:
+                k = k + 1
+                h_sum = h_sum + h
+                if abs(energy) < eps * 0.5 and h < h_max:
+                    h = h * 2
+            elif abs(energy) > eps and h > h_min:
+                h = h * 0.5
+            else:
+                k = k + 1
+                h_sum = h_sum + h
+        else:
+            k += 1
+            h_sum += h
+
+    y = y[:, :k, :]
+    print('Backward Euler k: ', k)
+    print('Maximaler Error Backward Euler: ', max_error)
+
+    return y
+
+
+'''def forward_euler(f, y0, t0, t1, N):
+    """
+    Explicit Euler method for systems of differential equations: y' = f(t, y); with f,y,y' n-dimensional vectors.
+    :param f: list of functions
+    :param y0: list of floats or ints, initial values y(t0)=y0
+    :param t0: float or int, start of interval for parameter t
+    :param t1: float or int, end of interval for parameter t
+    :param h: float or int, step-size
+    :return: two lists of floats, approximation of y at interval t0-t1 in step-size h and interval list
+    """
+    h = (t1 - t0) / N
+    t = t0
+    v = np.zeros((len(y0), N + 1, 2))
+    y = np.zeros((len(y0), N + 1, 2))
+    t_list = [0] * (N + 1)
+    t_list[0] = t0
+    v[:, 0, :] = y0[:, 1, :]
+    y[:, 0, :] = y0[:, 0, :]
+    for k in range(N):
+        for i in range(len(y0)):
+            y[i, k + 1, :] = y[i, k, :] + h * v[i, k, :]
+            v[i, k + 1, :] = v[i, k, :] + h * f(t, y[:, k, :])[i]
+        t = t + h
+        t_list[k + 1] = t
+    return y, t'''
+
+
+def predictor_corrector_1(f, y0, t0, t1, h, ad_step):
+    """
+    Explicit Euler method for systems of differential equations: y' = f(t, y); with f,y,y' n-dimensional vectors.
+    :param f: list of functions
+    :param y0: list of floats or ints, initial values y(t0)=y0
+    :param t0: float or int, start of interval for parameter t
+    :param t1: float or int, end of interval for parameter t
+    :param h: float or int, step-size
+    :return: two lists of floats, approximation of y at interval t0-t1 in step-size h and interval list
+    """
+    v = np.zeros((len(y0), 100000, 2))
+    y = np.zeros((len(y0), 100000, 2))
+    v[:, 0, :] = y0[:, 1, :]
+    y[:, 0, :] = y0[:, 0, :]
+    eps = 1e-5
+    h_sum = 0
+    h_min = h / 16
+    h_max = h
+    h_old = h
+    k = 1
+    max_err = 0
+    t = t0
+    while h_sum < t1 and k < 50000:
+
+        vp = v[:, k - 1, :] + h * f(t, y[:, k - 1, :])
+        yp = y[:, k - 1, :] + h * v[:, k - 1, :]
+
+        for i in range(len(y0)):
+
+            def fixpoint(x):
+                terms = []
+                for j in range(len(x)):
+                    if j != i:
+                        term = (-g * mass[0] * mass[1] * (x[i, :] - x[j, :]) / np.linalg.norm(x[i, :] - x[j, :]) ** 3) / \
+                               mass[i]
+                        terms.append(term)
+                return v[i, k - 1, :] + h * (terms[0] + terms[1]) - x[i, :]
+
+            def fixpoint_deriv(x):
+                terms = []
+                for j in range(len(x)):
+                    if j != i:
+                        term = (g * mass[0] * mass[1] * (
+                                2 * x[i, :] ** 2 - 3 * x[i, :] * x[j, :] + x[j, :] ** 2) / np.linalg.norm(
+                            x[i, :] - x[j, :]) ** (5 / 2)) / mass[i]
+                        terms.append(term)
+                return h * (terms[0] + terms[1]) - 1
+
+            vc = newton_raphson(fixpoint, fixpoint_deriv, yp, 0.0001, 10)[i, :]
+
+            v[i, k, :] = vc
+            y[i, k, :] = y[i, k - 1, :] + h_old * v[i, k - 1, :] #+ h_old ** 2 * 0.5 * f(t, y[:, k - 1, :])[i]
+
+        err = np.linalg.norm(vp - v[:, k, :])
+        if err > max_err:
+            max_err = err
+
+        if ad_step == 1:
+            h_old = h
+
+            if err > eps and h > h_min:
+                h = h * 0.5
+            elif err < eps ** 2 and h < h_max:
+                h = h * 2
+            else:
+                k = k + 1
+                h_sum += h
+        else:
+            k = k + 1
+            h_sum += h
+
+    print('Prädiktor Korrektor k: ', k)
+    print('Maximaler Error PK: ', max_err)
+    y = y[:, :k, :]
+    return y
+
+
+def fpi(f, t, yk, h, steps):
+    x = yk
+    while steps > 0:
+        x = (1 + h) * x + h ** 2 * f(t, x)
+        steps += -1
+    return x
+
+
+def backward_euler_0(f, y0, t0, t1, N):
+    h = (t1 - t0) / N
+    t = t0
+    v = np.zeros((len(y0), N + 1, 2))
+    y = np.zeros((len(y0), N + 1, 2))
+    t_list = [0] * (N + 1)
+    t_list[0] = t0
+    v[:, 0, :] = y0[:, 1, :]
+    y[:, 0, :] = y0[:, 0, :]
+    for k in range(N):
+        v[:, k + 1, :] = fpi(f, t, y[:, k, :], h, 5)
+        y[:, k + 1, :] = y[:, k, :] + h * v[:, k, :]
+        t = t + h
+        t_list[k + 1] = t
+    return y, t_list
+
+
+def backward_euler_equation(y, yn, h, f):
+    ret = y - yn - h * f(y)
+    return ret
+
+
+def backward_euler_scipy(f, y0, t0, t1, N):
+    h = (t1 - t0) / N
+    t = t0
+    v = np.zeros((N + 1, 6))
+    y = np.zeros((N + 1, 6))
+    y_start = y0[:, 0, :]
+    v_start = y0[:, 1, :]
+    y0_reshape = y_start.reshape(6, )
+    v0_reshape = v_start.reshape(6, )
+    t_list = [0] * (N + 1)
+    t_list[0] = t0
+    v[0, :] = v0_reshape
+    y[0, :] = y0_reshape
+
+    for k in range(N):
+        v[k + 1, :] = fsolve(backward_euler_equation, y[k, :], (y[k, :], h, flong))
+        y[k + 1, :] = y[k, :] + h * v[k, :]
+        t = t + h
+        t_list[k + 1] = t
+
+    y_ret = np.zeros((len(y0), N + 1, 2))
+    y_ret[:, :, 0] = y[:, ::2].transpose()
+    y_ret[:, :, 1] = y[:, 1::2].transpose()
+    return y_ret, t_list
+
+
+def fixpunkt(x, v, h, t):
+    return v + h * f(t, x)
+
+
+def backward_euler_2(f, y0, t0, t1, h, ad_step):
+    """
+    Explicit Euler method for systems of differential equations: y' = f(t, y); with f,y,y' n-dimensional vectors.
+    :param f: list of functions
+    :param y0: list of floats or ints, initial values y(t0)=y0
+    :param t0: float or int, start of interval for parameter t
+    :param t1: float or int, end of interval for parameter t
+    :param h: float or int, step-size
+    :return: two lists of floats, approximation of y at interval t0-t1 in step-size h and interval list
+    """
+    h_min = h / 256
+    h_max = h
+    h_sum = 0
+    k = 1
+    v = np.zeros((len(y0), 50001, 2))
+    y = np.zeros((len(y0), 50001, 2))
+    v[:, 0, :] = y0[:, 1, :]
+    y[:, 0, :] = y0[:, 0, :]
+    eps = 5e-16
+    t = t0
+    max_error = 0
+    while k < 50000 and h_sum < t1:
+        y[:, k, :] = y[:, k-1, :] + h * v[:, k-1, :] + h**2 * 0.5 * f(t, y[:, k-1, :])
+
+        n = 0
+        x0 = v[:, k-1, :]
+        x1 = fixpunkt(x0, v[:, k-1, :], h, t)
+        while np.linalg.norm(x1 - x0) > 0.0001 and n < 10:
+            x0 = x1
+            x1 = fixpunkt(x0, v[:, k-1, :], h, t)
+            n += 1
+
+        v[:, k, :] = x1
+
+        energy = np.linalg.norm(
+            mass[0] * f(t, y[:, k, :])[0] + mass[1] * f(t, y[:, k, :])[1] + mass[2] * f(t, y[:, k, :])[2])
+        if energy > max_error:
+            max_error = energy
+
+        if ad_step == 1:
+
+            if abs(energy) < eps:
+                k = k + 1
+                h_sum = h_sum + h
+                if abs(energy) < eps * 0.5 and h < h_max:
+                    h = h * 2
+            elif abs(energy) > eps and h > h_min:
+                h = h * 0.5
+            else:
+                k = k + 1
+                h_sum = h_sum + h
+        else:
+            k += 1
+            h_sum += h
+
+    y = y[:, :k, :]
+    print('Backward Euler k: ', k)
+    print('Maximaler Error Backward Euler: ', max_error)
+
+    return y
+
+def energy_calc(y, v):
+    return 0.5 * (mass[0] * norm(v[0])**2 + mass[1] * norm(v[1])**2 + mass[2] * norm(v[2])**2) - \
+           g * ((mass[0] * mass[1]) / norm(y[0] - y[1])**3 + (mass[0] * mass[2]) / norm(y[0] - y[2])**3 + (mass[1] * mass[2]) / norm(y[1] - y[2])**3)
+
+
+def forward_euler(f, y0, t0, t1, h, ad_step):
+    """
+    Explicit Euler method for systems of differential equations: y' = f(t, y); with f,y,y' n-dimensional vectors.
+    :param f: list of functions
+    :param y0: list of floats or ints, initial values y(t0)=y0
+    :param t0: float or int, start of interval for parameter t
+    :param t1: float or int, end of interval for parameter t
+    :param h: float or int, step-size
+    :return: two lists of floats, approximation of y at interval t0-t1 in step-size h and interval list
+    """
+    h_min = h / 256
+    h_max = h
+    h_sum = 0
+    k = 0
+    t = t0
+    v = np.zeros((len(y0), 1000000, 2))
+    y = np.zeros((len(y0), 1000000, 2))
+    v[:, 0, :] = y0[:, 1, :]
+    y[:, 0, :] = y0[:, 0, :]
+    max_error = 0
+    e_zero = energy_calc(y[:, 0, :], v[:, 0, :])
+    print('energy 0: ', e_zero)
+
+    while h_sum < t1 and k < 5000:
+        for i in range(len(y0)):
+            y[i, k + 1, :] = y[i, k, :] + h * v[i, k, :] #+ h**2 * 0.5 * f(t, y[:, k, :])[i]
+            v[i, k + 1, :] = v[i, k, :] + h * f(t, y[:, k, :])[i]
+
+        e_k = energy_calc(y[:, k+1, :], v[:, k+1, :])
+        energy = abs(e_zero - e_k)
+        print('energy '+str(k+1)+': ', e_k)
+
+        """energy = norm(
+            (mass[0] * f(t, y[:, k, :])[0] + mass[1] * f(t, y[:, k, :])[1] + mass[2] * f(t, y[:, k, :])[2]))"""
+
+        if energy > max_error:
+            max_error = energy
+
+        if ad_step == 1:
+
+            if abs(energy) < eps:
+                k = k + 1
+                h_sum = h_sum + h
+                if abs(energy) < eps ** 2 and h < h_max:
+                    h = h * 2
+            elif h > h_min:
+                h = h * 0.5
+            else:
+                k = k + 1
+                h_sum = h_sum + h
+        else:
+            k += 1
+            h_sum += h
+
+    y = y[:, :k + 1, :]
+    print('Forward Euler k: ', k)
+    print('Maximaler Error Forward Euler: ', max_error)
+    return y, max_error
+
+
+y = forward_euler(f, inits1, 0, 10, 0.01, 1)
 #print(y)
 
