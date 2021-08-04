@@ -12,7 +12,6 @@ import plotly.express as px
 from dash.dependencies import Input, Output, State
 import SupplementaryFiles.dash_reusable_components as drc
 
-
 t_start = 0
 mass = [1, 1, 1]
 g = 1
@@ -147,7 +146,7 @@ app.title = '3-Body Problem'
 
 app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, children=[
     # .container class is fixed, .container.scalable is scalable
-    html.Div(className="banner", style={'background-color': '#333399'}, children=[
+    html.Div(className="banner", style={'background-color': '#333399', 'color': 'white'}, children=[
         html.Div(className='container scalable', children=[
             html.H2(html.A(
                 'The Three-Body Problem - Gravitational Astronomy',
@@ -162,323 +161,322 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
         ]),
     ]),
 
-    html.Div(
-        [
-            dbc.Row(style={'background-color': 'white', 'margin': '0px 0px 0px 0px'},
-                    children=[
-                        dbc.Col([
-                            dbc.Card(
-                                id='first-card',
-                                style={'margin': '10px 10px 10px 10px'},
-                                children=[
-                                    html.H3('Parameters', style={'margin': '10px 10px 0px 0px'}, ),
-                                    drc.NamedRadioItems(
-                                        name='Model',
-                                        id="radios",
-                                        options=[
-                                            {"label": " Simplified Model", "value": 1},
-                                            {"label": " Sun System", "value": 2},
-                                        ],
-                                        value=1,
-                                        style={'margin': '10px 10px 10px 10px'},
-                                    ),
-                                    drc.NamedDropdown(
-                                        name='Stepsize',
-                                        id='h-dropdown',
-                                        options=[
-                                            {
-                                                'label': 'h = 0.01',
-                                                'value': 0.01
-                                            },
-                                            {
-                                                'label': 'h = 0.001',
-                                                'value': 0.001
-                                            },
-                                            {
-                                                'label': 'h = 0.0005',
-                                                'value': 0.0005
-                                            },
-                                            {
-                                                'label': 'h = 0.0001',
-                                                'value': 0.0001
-                                            },
-                                        ],
-                                        clearable=False,
-                                        searchable=False,
-                                        value=0.01,
-                                    ),
-                                    drc.NamedSlider(
-                                        name='Time',
-                                        id='time',
-                                        min=0,
-                                        max=30,
-                                        step=1,
-                                        marks={0: '0', 5: '5', 10: '10',
-                                               15: '15', 20: '20', 25: '25', 30: '30'},
-                                        value=10
-                                    ),
-                                    drc.NamedRadioItems(
-                                        name='Adaptive Step-Size',
-                                        id='ad_step pred-corr',
-                                        options=[{"label": " Yes", "value": 1},
-                                                 {"label": " No", "value": 0}],
-                                        value=0,
-                                        style={'margin': '10px 10px 10px 10px'},
-                                    )
-                                ]),
-                            dbc.Tabs([
-                                dbc.Tab(label="Simplified Model", children=[
-                                    dbc.Card(
-                                        id='second-card',
-                                        style={'margin': '10px 10px 10px 10px'},
-                                        children=[
-                                            html.H5('Simplified Model', style={'margin': '10px 10px 10px 10px'}),
-                                            html.Li('Model Assumption: g = 1', style={'margin': '5px 5px 5px 25px'}),
-                                            drc.NamedDropdown(
-                                                name='Starting Values',
-                                                id='scenario-dropdown',
-                                                options=[
-                                                    {
-                                                        'label': 'Scenario 1',
-                                                        'value': 1
-                                                    },
-                                                    {
-                                                        'label': 'Scenario 2',
-                                                        'value': 2
-                                                    },
-                                                    {
-                                                        'label': 'Scenario 3',
-                                                        'value': 3
-                                                    },
-                                                    {
-                                                        'label': 'Scenario 4',
-                                                        'value': 4
-                                                    },
-                                                    {
-                                                        'label': 'Scenario 5',
-                                                        'value': 5
-                                                    },
-                                                    {
-                                                        'label': 'Scenario 6',
-                                                        'value': 6
-                                                    },
-                                                    {
-                                                        'label': 'Scenario 7',
-                                                        'value': 7
-                                                    }
-                                                ],
-                                                clearable=False,
-                                                searchable=False,
-                                                value=1,
-                                            ),
-                                            drc.NamedSlider(
-                                                name='Mass of Object 1',
-                                                id='simple_mass1',
-                                                min=0.01,
-                                                max=3,
-                                                step=0.00001,
-                                                marks={0.00001: '0.00001', 0.5: '0.5', 1: '1',
-                                                       1.5: '1.5', 2: '2', 2.5: '2.5', 3.0: '3.0'},
-                                                value=1
-                                            ),
-                                            drc.NamedSlider(
-                                                name='Mass of Object 2',
-                                                id='simple_mass2',
-                                                min=0.01,
-                                                max=3,
-                                                step=0.00001,
-                                                marks={0.00001: '0.00001', 0.5: '0.5', 1: '1',
-                                                       1.5: '1.5', 2: '2', 2.5: '2.5', 3.0: '3.0'},
-                                                value=1
-                                            ),
-                                            drc.NamedSlider(
-                                                name='Mass of Object 3',
-                                                id='simple_mass3',
-                                                min=0.01,
-                                                max=3,
-                                                step=0.00001,
-                                                marks={0.00001: '0.00001', 0.5: '0.5', 1: '1',
-                                                       1.5: '1.5', 2: '2', 2.5: '2.5', 3.0: '3.0'},
-                                                value=1
-                                            ),
-                                        ])],
-                                        ),
-                                dbc.Tab(label="Sun System", children=[
-                                    dbc.Card(
-                                        id='third-card',
-                                        style={'margin': '10px 10px 10px 10px'},
-                                        children=[
-                                            html.H5('Sun System', style={'margin': '10px 10px 10px 10px'}),
-                                            drc.NamedDropdown(
-                                                name='Object 1',
-                                                id='object1-dropdown',
-                                                options=[
-                                                    {
-                                                        'label': 'Sun',
-                                                        'value': 'sun'
-                                                    },
-                                                    {
-                                                        'label': 'Venus',
-                                                        'value': 'ven'
-                                                    },
-                                                    {
-                                                        'label': 'Earth',
-                                                        'value': 'ear'
-                                                    },
-                                                    {
-                                                        'label': 'ISS',
-                                                        'value': 'iss'
-                                                    },
-                                                    {
-                                                        'label': 'Moon',
-                                                        'value': 'moo'
-                                                    },
-                                                    {
-                                                        'label': 'Jupiter',
-                                                        'value': 'jup'
-                                                    },
-                                                    {
-                                                        'label': 'Saturn',
-                                                        'value': 'sat'
-                                                    },
-                                                    {
-                                                        'label': 'Neptune',
-                                                        'value': 'nep'
-                                                    },
-                                                ],
-                                                clearable=False,
-                                                searchable=False,
-                                                value='sun',
-                                            ),
-                                            drc.NamedDropdown(
-                                                name='Object 2',
-                                                id='object2-dropdown',
-                                                options=[
-                                                    {
-                                                        'label': 'Sun',
-                                                        'value': 'sun'
-                                                    },
-                                                    {
-                                                        'label': 'Venus',
-                                                        'value': 'ven'
-                                                    },
-                                                    {
-                                                        'label': 'Earth',
-                                                        'value': 'ear'
-                                                    },
-                                                    {
-                                                        'label': 'ISS',
-                                                        'value': 'iss'
-                                                    },
-                                                    {
-                                                        'label': 'Moon',
-                                                        'value': 'moo'
-                                                    },
-                                                    {
-                                                        'label': 'Jupiter',
-                                                        'value': 'jup'
-                                                    },
-                                                    {
-                                                        'label': 'Saturn',
-                                                        'value': 'sat'
-                                                    },
-                                                    {
-                                                        'label': 'Neptune',
-                                                        'value': 'nep'
-                                                    },
-                                                ],
-                                                clearable=False,
-                                                searchable=False,
-                                                value='ear',
-                                            ),
-                                            drc.NamedDropdown(
-                                                name='Object 3',
-                                                id='object3-dropdown',
-                                                options=[
-                                                    {
-                                                        'label': 'Sun',
-                                                        'value': 'sun'
-                                                    },
-                                                    {
-                                                        'label': 'Venus',
-                                                        'value': 'ven'
-                                                    },
-                                                    {
-                                                        'label': 'Earth',
-                                                        'value': 'ear'
-                                                    },
-                                                    {
-                                                        'label': 'ISS',
-                                                        'value': 'iss'
-                                                    },
-                                                    {
-                                                        'label': 'Moon',
-                                                        'value': 'moo'
-                                                    },
-                                                    {
-                                                        'label': 'Jupiter',
-                                                        'value': 'jup'
-                                                    },
-                                                    {
-                                                        'label': 'Saturn',
-                                                        'value': 'sat'
-                                                    },
-                                                    {
-                                                        'label': 'Neptune',
-                                                        'value': 'nep'
-                                                    },
-                                                ],
-                                                clearable=False,
-                                                searchable=False,
-                                                value='sat',
-                                            ),
-                                        ],
-                                    ),
-                                ])]),
-                        ],
-                            width=3),
-                        dbc.Col(children=[
-                            html.Div(
-                                id='div-expl-euler',
-                                children=[
-                                    dcc.Graph(
-                                        id='expl-euler'
-                                    )],
-                            ),
-                            html.Div(
-                                id='div-runge-kutta',
-                                children=dcc.Graph(
-                                    id='runge-kutta'
-                                )
-                            ),
-                        ], width=4, align='center'),
-                        dbc.Col(children=[
-                            html.Div(
-                                id='div-impl-euler',
-                                children=dcc.Graph(
-                                    id='impl-euler'
-                                ),
-                            ),
-                            html.Div(
-                                id='div-corr-pred',
-                                children=[
-                                    dcc.Graph(
-                                        id='corr-pred'
-                                    ),
-                                ]
-                            ),
-                        ], width=4, align='center'),
-                    ]),
-        ]
-    ),
+    html.Div([
+                 dbc.Row(style={'background-color': 'white', 'margin': '0px 0px 0px 0px'},
+                         children=[
+                             dbc.Col([
+                                 dbc.Card(
+                                     id='first-card',
+                                     style={'margin': '10px 10px 10px 10px'},
+                                     children=[
+                                         html.H3('Parameters', style={'margin': '10px 10px 0px 0px'}, ),
+                                         drc.NamedRadioItems(
+                                             name='Model',
+                                             id="radios",
+                                             options=[
+                                                 {"label": " Simplified Model", "value": 1},
+                                                 {"label": " Sun System", "value": 2},
+                                             ],
+                                             value=1,
+                                             style={'margin': '10px 10px 10px 10px'},
+                                         ),
+                                         drc.NamedDropdown(
+                                             name='Stepsize',
+                                             id='h-dropdown',
+                                             options=[
+                                                 {
+                                                     'label': 'h = 0.01',
+                                                     'value': 0.01
+                                                 },
+                                                 {
+                                                     'label': 'h = 0.001',
+                                                     'value': 0.001
+                                                 },
+                                                 {
+                                                     'label': 'h = 0.0005',
+                                                     'value': 0.0005
+                                                 },
+                                                 {
+                                                     'label': 'h = 0.0001',
+                                                     'value': 0.0001
+                                                 },
+                                             ],
+                                             clearable=False,
+                                             searchable=False,
+                                             value=0.01,
+                                         ),
+                                         drc.NamedSlider(
+                                             name='Time',
+                                             id='time',
+                                             min=0,
+                                             max=30,
+                                             step=1,
+                                             marks={0: '0', 5: '5', 10: '10',
+                                                    15: '15', 20: '20', 25: '25', 30: '30'},
+                                             value=10
+                                         ),
+                                         drc.NamedRadioItems(
+                                             name='Adaptive Step-Size',
+                                             id='ad_step pred-corr',
+                                             options=[{"label": " Yes", "value": 1},
+                                                      {"label": " No", "value": 0}],
+                                             value=0,
+                                             style={'margin': '10px 10px 10px 10px'},
+                                         )
+                                     ]),
+                                 dbc.Tabs([
+                                     dbc.Tab(label="Simplified Model", children=[
+                                         dbc.Card(
+                                             id='second-card',
+                                             style={'margin': '10px 10px 10px 10px'},
+                                             children=[
+                                                 html.H5('Simplified Model', style={'margin': '10px 10px 10px 10px'}),
+                                                 html.Li('Model Assumption: g = 1',
+                                                         style={'margin': '5px 5px 5px 25px'}),
+                                                 drc.NamedDropdown(
+                                                     name='Starting Values',
+                                                     id='scenario-dropdown',
+                                                     options=[
+                                                         {
+                                                             'label': 'Scenario 1',
+                                                             'value': 1
+                                                         },
+                                                         {
+                                                             'label': 'Scenario 2',
+                                                             'value': 2
+                                                         },
+                                                         {
+                                                             'label': 'Scenario 3',
+                                                             'value': 3
+                                                         },
+                                                         {
+                                                             'label': 'Scenario 4',
+                                                             'value': 4
+                                                         },
+                                                         {
+                                                             'label': 'Scenario 5',
+                                                             'value': 5
+                                                         },
+                                                         {
+                                                             'label': 'Scenario 6',
+                                                             'value': 6
+                                                         },
+                                                         {
+                                                             'label': 'Scenario 7',
+                                                             'value': 7
+                                                         }
+                                                     ],
+                                                     clearable=False,
+                                                     searchable=False,
+                                                     value=1,
+                                                 ),
+                                                 drc.NamedSlider(
+                                                     name='Mass of Object 1',
+                                                     id='simple_mass1',
+                                                     min=0.01,
+                                                     max=3,
+                                                     step=0.00001,
+                                                     marks={0.00001: '0.00001', 0.5: '0.5', 1: '1',
+                                                            1.5: '1.5', 2: '2', 2.5: '2.5', 3.0: '3.0'},
+                                                     value=1
+                                                 ),
+                                                 drc.NamedSlider(
+                                                     name='Mass of Object 2',
+                                                     id='simple_mass2',
+                                                     min=0.01,
+                                                     max=3,
+                                                     step=0.00001,
+                                                     marks={0.00001: '0.00001', 0.5: '0.5', 1: '1',
+                                                            1.5: '1.5', 2: '2', 2.5: '2.5', 3.0: '3.0'},
+                                                     value=1
+                                                 ),
+                                                 drc.NamedSlider(
+                                                     name='Mass of Object 3',
+                                                     id='simple_mass3',
+                                                     min=0.01,
+                                                     max=3,
+                                                     step=0.00001,
+                                                     marks={0.00001: '0.00001', 0.5: '0.5', 1: '1',
+                                                            1.5: '1.5', 2: '2', 2.5: '2.5', 3.0: '3.0'},
+                                                     value=1
+                                                 ),
+                                             ])],
+                                             ),
+                                     dbc.Tab(label="Sun System", children=[
+                                         dbc.Card(
+                                             id='third-card',
+                                             style={'margin': '10px 10px 10px 10px'},
+                                             children=[
+                                                 html.H5('Sun System', style={'margin': '10px 10px 10px 10px'}),
+                                                 drc.NamedDropdown(
+                                                     name='Object 1',
+                                                     id='object1-dropdown',
+                                                     options=[
+                                                         {
+                                                             'label': 'Sun',
+                                                             'value': 'sun'
+                                                         },
+                                                         {
+                                                             'label': 'Venus',
+                                                             'value': 'ven'
+                                                         },
+                                                         {
+                                                             'label': 'Earth',
+                                                             'value': 'ear'
+                                                         },
+                                                         {
+                                                             'label': 'ISS',
+                                                             'value': 'iss'
+                                                         },
+                                                         {
+                                                             'label': 'Moon',
+                                                             'value': 'moo'
+                                                         },
+                                                         {
+                                                             'label': 'Jupiter',
+                                                             'value': 'jup'
+                                                         },
+                                                         {
+                                                             'label': 'Saturn',
+                                                             'value': 'sat'
+                                                         },
+                                                         {
+                                                             'label': 'Neptune',
+                                                             'value': 'nep'
+                                                         },
+                                                     ],
+                                                     clearable=False,
+                                                     searchable=False,
+                                                     value='sun',
+                                                 ),
+                                                 drc.NamedDropdown(
+                                                     name='Object 2',
+                                                     id='object2-dropdown',
+                                                     options=[
+                                                         {
+                                                             'label': 'Sun',
+                                                             'value': 'sun'
+                                                         },
+                                                         {
+                                                             'label': 'Venus',
+                                                             'value': 'ven'
+                                                         },
+                                                         {
+                                                             'label': 'Earth',
+                                                             'value': 'ear'
+                                                         },
+                                                         {
+                                                             'label': 'ISS',
+                                                             'value': 'iss'
+                                                         },
+                                                         {
+                                                             'label': 'Moon',
+                                                             'value': 'moo'
+                                                         },
+                                                         {
+                                                             'label': 'Jupiter',
+                                                             'value': 'jup'
+                                                         },
+                                                         {
+                                                             'label': 'Saturn',
+                                                             'value': 'sat'
+                                                         },
+                                                         {
+                                                             'label': 'Neptune',
+                                                             'value': 'nep'
+                                                         },
+                                                     ],
+                                                     clearable=False,
+                                                     searchable=False,
+                                                     value='ear',
+                                                 ),
+                                                 drc.NamedDropdown(
+                                                     name='Object 3',
+                                                     id='object3-dropdown',
+                                                     options=[
+                                                         {
+                                                             'label': 'Sun',
+                                                             'value': 'sun'
+                                                         },
+                                                         {
+                                                             'label': 'Venus',
+                                                             'value': 'ven'
+                                                         },
+                                                         {
+                                                             'label': 'Earth',
+                                                             'value': 'ear'
+                                                         },
+                                                         {
+                                                             'label': 'ISS',
+                                                             'value': 'iss'
+                                                         },
+                                                         {
+                                                             'label': 'Moon',
+                                                             'value': 'moo'
+                                                         },
+                                                         {
+                                                             'label': 'Jupiter',
+                                                             'value': 'jup'
+                                                         },
+                                                         {
+                                                             'label': 'Saturn',
+                                                             'value': 'sat'
+                                                         },
+                                                         {
+                                                             'label': 'Neptune',
+                                                             'value': 'nep'
+                                                         },
+                                                     ],
+                                                     clearable=False,
+                                                     searchable=False,
+                                                     value='sat',
+                                                 ),
+                                             ],
+                                         ),
+                                     ])]),
+                             ],
+                                 width=3),
+                             dbc.Col(children=[
+                                 html.Div(
+                                     id='div-expl-euler',
+                                     children=[
+                                         dcc.Graph(
+                                             id='expl-euler'
+                                         )],
+                                 ),
+                                 html.Div(
+                                     id='div-runge-kutta',
+                                     children=dcc.Graph(
+                                         id='runge-kutta'
+                                     )
+                                 ),
+                             ], width=4, align='center'),
+                             dbc.Col(children=[
+                                 html.Div(
+                                     id='div-impl-euler',
+                                     children=dcc.Graph(
+                                         id='impl-euler'
+                                     ),
+                                 ),
+                                 html.Div(
+                                     id='div-corr-pred',
+                                     children=[
+                                         dcc.Graph(
+                                             id='corr-pred'
+                                         ),
+                                     ]
+                                 ),
+                             ], width=4, align='center'),
+                         ]),
+             ]),
     html.Footer(
         html.Div('Project for the course "Interacting particle systems in Science", code by Verena Alton.',
                  style={
-                    'text-decoration': 'none',
-                    'color': 'white',
-                    'background-color': '#333399',
-                    'text-align': 'center'
-                    })
+                     'text-decoration': 'none',
+                     'color': 'white',
+                     'background-color': '#333399',
+                     'text-align': 'center'
+                 })
     )
 ]
                            )
@@ -517,14 +515,15 @@ def update_figure(model, h, t_end, scenario, m1, m2, m3, o1, o2, o3, ad_step):
                                   'Runge-Kutta Method',
                                   names, colours)
         try:
-            fig_impl = generate_figures(backward_euler(f, init_data, t_start, t_end, h, ad_step), 'Implicit Euler Method',
+            fig_impl = generate_figures(backward_euler(f, init_data, t_start, t_end, h, ad_step),
+                                        'Implicit Euler Method',
                                         names, colours)
         except:
             fig_impl = fig_not_convergent('Implicit Euler Method')
 
         fig_precor = generate_figures(heun(f, init_data, t_start, t_end, h, ad_step),
-                                          'Heun Method',
-                                          names, colours)
+                                      'Heun Method',
+                                      names, colours)
         return fig_expl, fig_impl, fig_rk, fig_precor
     elif model == 2:
         g = GG
@@ -537,13 +536,14 @@ def update_figure(model, h, t_end, scenario, m1, m2, m3, o1, o2, o3, ad_step):
         fig_rk = generate_figures(runge_kutta_4(f, init_data, t_start, t_end, h, ad_step),
                                   'Runge-Kutta Method', names, colours)
         try:
-            fig_impl = generate_figures(backward_euler(f, init_data, t_start, t_end, h, ad_step), 'Implicit Euler Method',
+            fig_impl = generate_figures(backward_euler(f, init_data, t_start, t_end, h, ad_step),
+                                        'Implicit Euler Method',
                                         names, colours)
         except:
             fig_impl = fig_not_convergent('Implicit Euler Method')
         fig_precor = generate_figures(predictor_corrector(f, init_data, t_start, t_end, h, ad_step),
-                                          'Heun Method',
-                                          names, colours)
+                                      'Heun Method',
+                                      names, colours)
         return fig_expl, fig_impl, fig_rk, fig_precor
 
 
@@ -596,7 +596,7 @@ def forward_euler(f, y0, t0, t1, h, ad_step):
     eps = 1e-15
     while h_sum < t1 and k < 50000:
 
-        y[:, k + 1, :] = y[:, k, :] + h * v[:, k, :] #+ h**2 * 0.5 * f(t, y[:, k, :])
+        y[:, k + 1, :] = y[:, k, :] + h * v[:, k, :]  # + h**2 * 0.5 * f(t, y[:, k, :])
         v[:, k + 1, :] = v[:, k, :] + h * f(t, y[:, k, :])
 
         energy = norm(
@@ -716,7 +716,7 @@ def runge_kutta_4(f, y0, t0, t1, h, ad_step):
             l5 = v[i, k, :] + B[4, 0] * k1 + B[4, 1] * k2 + B[4, 2] * k3 + B[4, 3] * k4
             l6 = v[i, k, :] + B[5, 0] * k1 + B[5, 1] * k2 + B[5, 2] * k3 + B[5, 3] * k4 + B[5, 4] * k5
             y[i, k + 1] = y[i, k] + h * CH[0] * l1 + h * CH[1] * l2 + h * CH[2] * l3 + h * CH[3] * l4 + h * CH[
-                4] * l5 + h * CH[5] * l6 + h**2 * 0.5 * f(t, y[:, k, :])[i]
+                4] * l5 + h * CH[5] * l6 + h ** 2 * 0.5 * f(t, y[:, k, :])[i]
 
             l1_all[i, :] = l1
             l2_all[i, :] = l2
@@ -832,7 +832,7 @@ def backward_euler(f, y0, t0, t1, h, ad_step):
                 return h * (terms[0] + terms[1]) - 1
 
             v[i, k, :] = newton_raphson(fixpoint, fixpoint_deriv, y[:, k - 1, :], 0.0001, 5)[i, :]
-            y[i, k, :] = y[i, k - 1, :] + h * v[i, k - 1, :] #+ h ** 2 * 0.5 * f(t, y[:, k - 1, :])[i]
+            y[i, k, :] = y[i, k - 1, :] + h * v[i, k - 1, :]  # + h ** 2 * 0.5 * f(t, y[:, k - 1, :])[i]
 
         energy = norm(
             mass[0] * f(t, y[:, k, :])[0] + mass[1] * f(t, y[:, k, :])[1] + mass[2] * f(t, y[:, k, :])[2])
@@ -1052,7 +1052,6 @@ for i in range(1, 4):
 error_data = pd.DataFrame(data=error_dict, index=['Explicit Euler', 'Implicit Euler', 'Runge-Kutta', 'Heun'])
 error_data.to_csv(path_or_buf='Error_Data.csv')"""
 
-
 """convOrdFE = (errFE2/errFE1)
 convOrdBE = (errBE2/errBE1)
 convOrdRK = (errRK2/errRK1)
@@ -1072,7 +1071,7 @@ def array_to_csv(y, name):
     x2 = y[2, :, 0]
     y2 = y[2, :, 1]
     df = pd.DataFrame([x0, y0, x1, y1, x2, y2], index=['Body 1, x-Axis', 'Body 1, y-Axis', 'Body 2, x-Axis',
-                                                         'Body 2, y-Axis', 'Body 3, x-Axis', 'Body 3, y-Axis'])
+                                                       'Body 2, y-Axis', 'Body 3, x-Axis', 'Body 3, y-Axis'])
     df = df.transpose()
     df.to_csv(name)
     return df
@@ -1082,7 +1081,6 @@ def array_to_csv(y, name):
 y_python_10000, t = predictor_corrector(f, inits3, 0, 10, 10000, 0)
 array_to_csv(y_python_1000, 'PredCorr_0-10_1000.csv')
 array_to_csv(y_python_10000, 'PredCorr-10_10000.csv')"""
-
 
 if __name__ == '__main__':
     app.run_server(debug=True, port=8050)
