@@ -471,6 +471,15 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                     ]),
         ]
     ),
+    html.Footer(
+        html.Div('Project for the course "Interacting particle systems in Science", code by Verena Alton.',
+                 style={
+                    'text-decoration': 'none',
+                    'color': 'white',
+                    'background-color': '#333399',
+                    'text-align': 'center'
+                    })
+    )
 ]
                            )
 
