@@ -1413,12 +1413,51 @@ def generate_figures(method, title, names, colours, colours_marker):
                          line=dict(width=2, color=colours[1])),
               go.Scatter(x=y[2, :, 0], y=y[2, :, 1],
                          mode="lines", name=names[2],
-                         line=dict(width=2, color=colours[2]))
+                         line=dict(width=2, color=colours[2])),
+              go.Scatter(x=y[0, :, 0], y=y[0, :, 1],
+                         mode="lines",
+                         line=dict(width=2, color=colours[0]),
+                         showlegend=False),
+              go.Scatter(x=y[1, :, 0], y=y[1, :, 1],
+                         mode="lines",
+                         line=dict(width=2, color=colours[1]),
+                         showlegend=False),
+              go.Scatter(x=y[2, :, 0], y=y[2, :, 1],
+                         mode="lines",
+                         line=dict(width=2, color=colours[2]),
+                         showlegend=False)
               ],
         layout=go.Layout(
             xaxis=dict(autorange=True, zeroline=False, range=[-2, 2]),
             yaxis=dict(autorange=True, zeroline=False, range=[-2, 2]),
-            title=title, hovermode="closest"),
+            title=title, hovermode="closest",
+            updatemenus=[dict(type="buttons",
+                              buttons=[dict(label="Play",
+                                            method="animate",
+                                            args=[None, {"frame": {"duration": 50, "redraw": False},
+                                                         "fromcurrent": True, "transition": {"duration": 30,
+                                                                                             "easing": "quadratic-in-out"}}]),
+                                       dict(label="Pause",
+                                            method="animate",
+                                            args=[[None], {"frame": {"duration": 0, "redraw": False},
+                                                           "mode": "immediate",
+                                                           "transition": {"duration": 0}}])
+                                       ])]),
+        frames=[go.Frame(
+            data=[go.Scatter(
+                x=[y[0, n, 0]],
+                y=[y[0, n, 1]],
+                mode="markers",
+                marker=dict(color=colours[0], size=10)),
+                go.Scatter(x=[y[1, n, 0]], y=[y[1, n, 1]],
+                           mode="markers",
+                           marker=dict(color=colours[1], size=10)),
+                go.Scatter(x=[y[2, n, 0]], y=[y[2, n, 1]],
+                           mode="markers",
+                           marker=dict(color=colours[2], size=10))
+            ])
+
+            for n in range(k)]
     )
     fig.add_trace(
         go.Scatter(
