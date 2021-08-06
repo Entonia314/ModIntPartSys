@@ -1050,7 +1050,7 @@ for i in range(1, 4):
         print(error_dict)
 
 error_data = pd.DataFrame(data=error_dict, index=['Explicit Euler', 'Implicit Euler', 'Runge-Kutta', 'Heun'])
-error_data.to_csv(path_or_buf='Error_Data.csv')"""
+error_data.to_csv(path_or_buf='csv_data/Error_Data.csv')"""
 
 """convOrdFE = (errFE2/errFE1)
 convOrdBE = (errBE2/errBE1)

@@ -72,7 +72,7 @@ Msat = 5.7e26  # Mass of Saturn
 Mmoo = 7.346e22  # Mass of Earth-Moon
 Mven = 4.875e24  # Mass of Venus
 Mnep = 1.024e26  # Mass of Neptun
-Miss = 419725  # Mass of ISS
+Miss = 440725  # Mass of ISS
 
 G = 6.673e-11  # Gravitational Constant
 
@@ -103,7 +103,7 @@ rsun = [0, 0]
 rmoo = [rear[0] + 0.00257, 0]
 rven = [0.723, 0]
 rnep = [30.047, 0]
-riss = [rear[0] - 420e3 / RR, 0]
+riss = [rear[0] + (420e3 / RR), 0]
 
 magear = np.sqrt(Msun * GG / rear[0])  # Magnitude of Earth's initial velocity
 magjup = 13.06e3 * TT / RR  # Magnitude of Jupiter's initial velocity
@@ -117,10 +117,10 @@ vear = [0, magear * 1.0]  # Initial velocity vector for Earth.Taken to be along 
 vjup = [0, magjup * 1.0]  # Initial velocity vector for Jupiter
 vsat = [0, magsat * 1.0]  # Initial velocity vector for Saturn
 vsun = [0, 0]
-vmoo = [0, magmoo]  # Initial velocity vector for Moon
+vmoo = [0, magear + magmoo]  # Initial velocity vector for Moon
 vven = [0, magven]  # Initial velocity vector for Venus
 vnep = [0, magnep]
-viss = [0, magiss]
+viss = [0, magiss + magear]
 
 method_dict = {'forward_euler': 'Explizites Euler-Verfahren', 'backward_euler': 'Implizites Euler-Verfahren'}
 init_dict = {1: inits1, 2: inits2, 3: inits3, 4: inits4, 5: inits5, 6: inits6, 7: inits7}
@@ -129,6 +129,10 @@ r_dict = {'sun': rsun, 'sat': rsat, 'jup': rjup, 'ear': rear, 'moo': rmoo, 'ven'
 v_dict = {'sun': vsun, 'sat': vsat, 'jup': vjup, 'ear': vear, 'moo': vmoo, 'ven': vven, 'nep': vnep, 'iss': viss}
 colour_dict = {'sun': 'yellow', 'sat': 'grey', 'jup': 'orange', 'ear': '#4d7bd1', 'moo': 'darkgrey', 'ven': '#d1996f',
                'nep': '#2a1a82', 'iss': 'purple'}
+colour_marker_dict = {'sun': 'rgba(242, 238, 124, 0.5)', 'sat': 'rgba(150, 150, 131, 0.5)',
+                      'jup': 'rgba(237, 180, 45, 0.5)', 'ear': 'rgba(89, 110, 247, 0.5)',
+                      'moo': 'rgba(99, 103, 130, 0.5)', 'ven': 'rgba(173, 173, 101, 0.5)',
+                      'nep': 'rgba(54, 48, 112, 0.5)', 'iss': 'rgba(104, 46, 140, 0.5)'}
 name_dict = {'sun': 'Sun', 'sat': 'Saturn', 'jup': 'Jupiter', 'ear': 'Earth', 'moo': 'Moon', 'ven': 'Venus',
              'nep': 'Neptune', 'iss': 'ISS'}
 
@@ -150,7 +154,7 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
         html.Div(className='container scalable', children=[
             html.H2(html.A(
                 'The Three-Body Problem - Gravitational Astronomy',
-                href='',
+                href='https://github.com/Entonia314/ModIntPartSys',
                 style={
                     'text-decoration': 'none',
                     'color': 'inherit',
@@ -177,10 +181,18 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                         dbc.Row(
                             html.Div(
                                 id='div_graph1',
+                                style={
+                                    'text-decoration': 'none',
+                                    'color': 'black',
+                                    'background-color': 'white',
+                                    'text-align': '',
+                                    'margin': '0px 0px 30px 50px'
+                                },
                                 children=[
                                     dcc.Graph(
                                         id='graph1'
-                                    )],
+                                    ),
+                                    dbc.Row(id='param_infos1')],
                             ),
                         ),
                         dbc.Row([dbc.Col([
@@ -188,7 +200,7 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                                 id='parameter_card1',
                                 style={'margin': '0px 10px 10px 10px'},
                                 children=[
-                                    html.H3('Parameters', style={'margin': '10px 10px 0px 0px'}, ),
+                                    html.H3('Parameters', style={'margin': '10px 10px 10px 10px'}, ),
                                     drc.NamedDropdown(
                                         name='Method',
                                         id='method1',
@@ -199,6 +211,8 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                                             {'label': 'Heun', 'value': 'heun'}],
                                         value='rungekutta',
                                         style={},
+                                        clearable=False,
+                                        searchable=False,
                                     ),
                                     drc.NamedRadioItems(
                                         name='Model',
@@ -480,10 +494,18 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                         dbc.Row(
                             html.Div(
                                 id='div_graph2',
+                                style={
+                                    'text-decoration': 'none',
+                                    'color': 'black',
+                                    'background-color': 'white',
+                                    'text-align': '',
+                                    'margin': '0px 0px 30px 50px'
+                                },
                                 children=[
                                     dcc.Graph(
                                         id='graph2'
-                                    )],
+                                    ),
+                                    dbc.Row(id='param_infos2')],
                             ),
                         ),
                         dbc.Row([dbc.Col([
@@ -491,7 +513,7 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                                 id='parameter_card2',
                                 style={'margin': '0px 10px 10px 10px'},
                                 children=[
-                                    html.H3('Parameters', style={'margin': '10px 10px 0px 0px'}, ),
+                                    html.H3('Parameters', style={'margin': '10px 10px 10px 10px'}, ),
                                     drc.NamedDropdown(
                                         name='Method',
                                         id='method2',
@@ -502,6 +524,8 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                                             {'label': 'Heun', 'value': 'heun'}],
                                         value='heun',
                                         style={},
+                                        clearable=False,
+                                        searchable=False,
                                     ),
                                     drc.NamedRadioItems(
                                         name='Model',
@@ -773,7 +797,7 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
         ),
 
         html.Footer(
-            html.Div('Project for the course "Interacting particle systems in Science", code by Verena Alton.',
+            html.Div('Project for the course "Modelling interacting particle systems in science".',
                      style={
                          'text-decoration': 'none',
                          'color': 'white',
@@ -787,6 +811,7 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
 
 @app.callback(
     Output(component_id='graph1', component_property='figure'),
+    Output(component_id='param_infos1', component_property='children'),
     Input(component_id='method1', component_property='value'),
     Input(component_id='model1', component_property='value'),
     Input(component_id='h-dropdown1', component_property='value'),
@@ -804,67 +829,70 @@ def update_figure(method, model, h, t_end, scenario, m1, m2, m3, o1, o2, o3, ad_
     if model == 1:
         names = ['Object 1', 'Object 2', 'Object 3']
         colours = ['green', 'blue', 'red']
+        colours_marker = ['rgba(124, 201, 119, 0.5)', 'rgba(105, 134, 201, 0.5)', 'rgba(207, 52, 72, 0.5)']
         init_data = init_dict[scenario]
         mass = [m1, m2, m3]
         g = 1
         if method == 'forwardeuler':
-            graph1 = generate_figures(forward_euler(f, init_data, t_start, t_end, h, ad_step, mass, g),
-                                      'Explicit Euler Method',
-                                      names,
-                                      colours)
+            graph1, dots1 = generate_figures(forward_euler(f, init_data, t_start, t_end, h, ad_step, mass, g),
+                                             'Explicit Euler Method',
+                                             names,
+                                             colours, colours_marker)
         elif method == 'rungekutta':
-            graph1 = generate_figures(runge_kutta_4(f, init_data, t_start, t_end, h, ad_step, mass, g),
-                                      'Runge-Kutta Method',
-                                      names, colours)
+            graph1, dots1 = generate_figures(runge_kutta_4(f, init_data, t_start, t_end, h, ad_step, mass, g),
+                                             'Runge-Kutta Method',
+                                             names, colours, colours_marker)
         elif method == 'backwardeuler':
             try:
-                graph1 = generate_figures(backward_euler(f, init_data, t_start, t_end, h, ad_step, mass, g),
-                                          'Implicit Euler Method',
-                                          names, colours)
+                graph1, dots1 = generate_figures(backward_euler(f, init_data, t_start, t_end, h, ad_step, mass, g),
+                                                 'Implicit Euler Method',
+                                                 names, colours, colours_marker)
             except:
-                graph1 = fig_not_convergent('Implicit Euler Method')
+                graph1, dots1 = fig_not_convergent('Implicit Euler Method')
         elif method == 'heun':
 
-            graph1 = generate_figures(heun(f, init_data, t_start, t_end, h, ad_step, mass, g),
-                                      'Heun Method',
-                                      names, colours)
+            graph1, dots1 = generate_figures(heun(f, init_data, t_start, t_end, h, ad_step, mass, g),
+                                             'Heun Method',
+                                             names, colours, colours_marker)
         else:
-            graph1 = fig_empty()
-        return graph1
+            graph1, dots1 = fig_empty()
+        return graph1, dots1
     elif model == 2:
         g = GG
         names = [name_dict[o1], name_dict[o2], name_dict[o3]]
         colours = [colour_dict[o1], colour_dict[o2], colour_dict[o3]]
+        colours_marker = [colour_marker_dict[o1], colour_marker_dict[o2], colour_marker_dict[o3]]
         mass = np.array([mass_dict[o1], mass_dict[o2], mass_dict[o3]])
         init_data = np.array([[r_dict[o1], v_dict[o1]], [r_dict[o2], v_dict[o2]], [r_dict[o3], v_dict[o3]]])
         if method == 'forwardeuler':
-            graph1 = generate_figures(forward_euler(f, init_data, t_start, t_end, h, ad_step, mass, g),
-                                      'Explicit Euler Method',
-                                      names,
-                                      colours)
+            graph1, dots1 = generate_figures(forward_euler(f, init_data, t_start, t_end, h, ad_step, mass, g),
+                                             'Explicit Euler Method',
+                                             names,
+                                             colours, colours_marker)
         elif method == 'rungekutta':
-            graph1 = generate_figures(runge_kutta_4(f, init_data, t_start, t_end, h, ad_step, mass, g),
-                                      'Runge-Kutta Method',
-                                      names, colours)
+            graph1, dots1 = generate_figures(runge_kutta_4(f, init_data, t_start, t_end, h, ad_step, mass, g),
+                                             'Runge-Kutta Method',
+                                             names, colours, colours_marker)
         elif method == 'backwardeuler':
             try:
-                graph1 = generate_figures(backward_euler(f, init_data, t_start, t_end, h, ad_step, mass, g),
-                                          'Implicit Euler Method',
-                                          names, colours)
+                graph1, dots1 = generate_figures(backward_euler(f, init_data, t_start, t_end, h, ad_step, mass, g),
+                                                 'Implicit Euler Method',
+                                                 names, colours, colours_marker)
             except:
-                graph1 = fig_not_convergent('Implicit Euler Method')
+                graph1, dots1 = fig_not_convergent('Implicit Euler Method')
         elif method == 'heun':
 
-            graph1 = generate_figures(heun(f, init_data, t_start, t_end, h, ad_step, mass, g),
-                                      'Heun Method',
-                                      names, colours)
+            graph1, dots1 = generate_figures(heun(f, init_data, t_start, t_end, h, ad_step, mass, g),
+                                             'Heun Method',
+                                             names, colours, colours_marker)
         else:
-            graph1 = fig_empty()
-        return graph1
+            graph1, dots1 = fig_empty()
+        return graph1, dots1
 
 
 @app.callback(
     Output(component_id='graph2', component_property='figure'),
+    Output(component_id='param_infos2', component_property='children'),
     Input(component_id='method2', component_property='value'),
     Input(component_id='model2', component_property='value'),
     Input(component_id='h-dropdown2', component_property='value'),
@@ -882,63 +910,65 @@ def update_figure(method, model, h, t_end, scenario, m1, m2, m3, o1, o2, o3, ad_
     if model == 1:
         names = ['Object 1', 'Object 2', 'Object 3']
         colours = ['green', 'blue', 'red']
+        colours_marker = ['rgba(124, 201, 119, 0.5)', 'rgba(105, 134, 201, 0.5)', 'rgba(207, 52, 72, 0.5)']
         init_data = init_dict[scenario]
         mass = [m1, m2, m3]
         g = 1
         if method == 'forwardeuler':
-            graph2 = generate_figures(forward_euler(f, init_data, t_start, t_end, h, ad_step, mass, g),
-                                      'Explicit Euler Method',
-                                      names,
-                                      colours)
+            graph2, dots2 = generate_figures(forward_euler(f, init_data, t_start, t_end, h, ad_step, mass, g),
+                                             'Explicit Euler Method',
+                                             names,
+                                             colours, colours_marker)
         elif method == 'rungekutta':
-            graph2 = generate_figures(runge_kutta_4(f, init_data, t_start, t_end, h, ad_step, mass, g),
-                                      'Runge-Kutta Method',
-                                      names, colours)
+            graph2, dots2 = generate_figures(runge_kutta_4(f, init_data, t_start, t_end, h, ad_step, mass, g),
+                                             'Runge-Kutta Method',
+                                             names, colours, colours_marker)
         elif method == 'backwardeuler':
             try:
-                graph2 = generate_figures(backward_euler(f, init_data, t_start, t_end, h, ad_step, mass, g),
-                                          'Implicit Euler Method',
-                                          names, colours)
+                graph2, dots2 = generate_figures(backward_euler(f, init_data, t_start, t_end, h, ad_step, mass, g),
+                                                 'Implicit Euler Method',
+                                                 names, colours, colours_marker)
             except:
-                graph2 = fig_not_convergent('Implicit Euler Method')
+                graph2, dots2 = fig_not_convergent('Implicit Euler Method')
         elif method == 'heun':
 
-            graph2 = generate_figures(heun(f, init_data, t_start, t_end, h, ad_step, mass, g),
-                                      'Heun Method',
-                                      names, colours)
+            graph2, dots2 = generate_figures(heun(f, init_data, t_start, t_end, h, ad_step, mass, g),
+                                             'Heun Method',
+                                             names, colours, colours_marker)
         else:
-            graph2 = fig_empty()
-        return graph2
+            graph2, dots2 = fig_empty()
+        return graph2, dots2
     elif model == 2:
         g = GG
         names = [name_dict[o1], name_dict[o2], name_dict[o3]]
         colours = [colour_dict[o1], colour_dict[o2], colour_dict[o3]]
+        colours_marker = [colour_marker_dict[o1], colour_marker_dict[o2], colour_marker_dict[o3]]
         mass = np.array([mass_dict[o1], mass_dict[o2], mass_dict[o3]])
         init_data = np.array([[r_dict[o1], v_dict[o1]], [r_dict[o2], v_dict[o2]], [r_dict[o3], v_dict[o3]]])
         if method == 'forwardeuler':
-            graph2 = generate_figures(forward_euler(f, init_data, t_start, t_end, h, ad_step, mass, g),
-                                      'Explicit Euler Method',
-                                      names,
-                                      colours)
+            graph2, dots2 = generate_figures(forward_euler(f, init_data, t_start, t_end, h, ad_step, mass, g),
+                                             'Explicit Euler Method',
+                                             names,
+                                             colours, colours_marker)
         elif method == 'rungekutta':
-            graph2 = generate_figures(runge_kutta_4(f, init_data, t_start, t_end, h, ad_step, mass, g),
-                                      'Runge-Kutta Method',
-                                      names, colours)
+            graph2, dots2 = generate_figures(runge_kutta_4(f, init_data, t_start, t_end, h, ad_step, mass, g),
+                                             'Runge-Kutta Method',
+                                             names, colours, colours_marker)
         elif method == 'backwardeuler':
             try:
-                graph2 = generate_figures(backward_euler(f, init_data, t_start, t_end, h, ad_step, mass, g),
-                                          'Implicit Euler Method',
-                                          names, colours)
+                graph2, dots2 = generate_figures(backward_euler(f, init_data, t_start, t_end, h, ad_step, mass, g),
+                                                 'Implicit Euler Method',
+                                                 names, colours, colours_marker)
             except:
-                graph2 = fig_not_convergent('Implicit Euler Method')
+                graph2, dots2 = fig_not_convergent('Implicit Euler Method')
         elif method == 'heun':
 
-            graph2 = generate_figures(heun(f, init_data, t_start, t_end, h, ad_step, mass, g),
-                                      'Heun Method',
-                                      names, colours)
+            graph2, dots2 = generate_figures(heun(f, init_data, t_start, t_end, h, ad_step, mass, g),
+                                             'Heun Method',
+                                             names, colours, colours_marker)
         else:
-            graph2 = fig_empty()
-        return graph2
+            graph2, dots2 = fig_empty()
+        return graph2, dots2
 
 
 def f(y, mass, g):
@@ -986,7 +1016,7 @@ def forward_euler(f, y0, t0, t1, h, ad_step, mass, g):
     y = np.zeros((len(y0), 1000000, 2))
     v[:, 0, :] = y0[:, 1, :]
     y[:, 0, :] = y0[:, 0, :]
-    max_error = 0
+    errlist = []
     eps = 1e-15
     while h_sum < t1 and k < 50000:
 
@@ -997,8 +1027,7 @@ def forward_euler(f, y0, t0, t1, h, ad_step, mass, g):
             mass[0] * f(y[:, k, :], mass, g)[0] + mass[1] * f(y[:, k, :], mass, g)[1] + mass[2] *
             f(y[:, k, :], mass, g)[2])
 
-        if energy > max_error:
-            max_error = energy
+        errlist.append(energy)
 
         if ad_step == 1:
 
@@ -1018,8 +1047,8 @@ def forward_euler(f, y0, t0, t1, h, ad_step, mass, g):
 
     y = y[:, :k + 1, :]
     print('Forward Euler k: ', k)
-    print('Maximaler Error Forward Euler: ', max_error)
-    return y, max_error
+    print('Maximaler Error Forward Euler: ', max(errlist))
+    return y, errlist, k, h_sum
 
 
 def runge_kutta(f, y0, t0, t1, h, mass, g):
@@ -1073,7 +1102,7 @@ def runge_kutta_4(f, y0, t0, t1, h, ad_step, mass, g):
     :param h: float or int, step-size
     :return: two lists of floats, approximation of y at interval t0-t1 in step-size h and interval list
     """
-    h_min = h / 256
+    h_min = h / 16
     h_max = h
     h_sum = 0
     eps = 1e-16
@@ -1083,7 +1112,7 @@ def runge_kutta_4(f, y0, t0, t1, h, ad_step, mass, g):
     v[:, 0, :] = y0[:, 1, :]
     y[:, 0, :] = y0[:, 0, :]
     k = 0
-    max_err = 0
+    errlist = []
     while k < 50000 and h_sum < t1:
         i = 0
 
@@ -1124,8 +1153,7 @@ def runge_kutta_4(f, y0, t0, t1, h, ad_step, mass, g):
 
         TE = norm(
             CT[0] * l1_all + CT[1] * l2_all + CT[2] * l3_all + CT[3] * l4_all + CT[4] * l5_all + CT[5] * l6_all)
-        if TE > max_err:
-            max_err = TE
+        errlist.append(TE)
 
         if ad_step == 1:
 
@@ -1145,10 +1173,10 @@ def runge_kutta_4(f, y0, t0, t1, h, ad_step, mass, g):
             h_sum = h_sum + h
 
     print('RK4 k: ', k)
-    print('Maximaler Error RKF: ', max_err)
+    print('Maximaler Error RKF: ', max(errlist))
 
     y = y[:, :k + 1, :]
-    return y, max_err
+    return y, errlist, k, h_sum
 
 
 def newton_raphson(f, g, x0, e, N):
@@ -1201,8 +1229,8 @@ def backward_euler(f, y0, t0, t1, h, ad_step, mass, g):
     y[:, 0, :] = y0[:, 0, :]
     eps = 5e-16
     t = t0
-    max_error = 0
-    while k < 50000 and h_sum < t1:
+    errlist = []
+    while k < 50001 and h_sum < t1:
 
         for i in range(len(y0)):
 
@@ -1232,8 +1260,7 @@ def backward_euler(f, y0, t0, t1, h, ad_step, mass, g):
         energy = norm(
             mass[0] * f(y[:, k, :], mass, g)[0] + mass[1] * f(y[:, k, :], mass, g)[1] + mass[2] *
             f(y[:, k, :], mass, g)[2])
-        if energy > max_error:
-            max_error = energy
+        errlist.append(energy)
 
         if ad_step == 1:
 
@@ -1252,10 +1279,11 @@ def backward_euler(f, y0, t0, t1, h, ad_step, mass, g):
             h_sum += h
 
     y = y[:, :k, :]
-    print('Backward Euler k: ', k)
-    print('Maximaler Error Backward Euler: ', max_error)
 
-    return y, max_error
+    print('Backward Euler k: ', k)
+    print('Maximaler Error Backward Euler: ', max(errlist))
+
+    return y, errlist, k - 1, h_sum
 
 
 def predictor_corrector(f, y0, t0, t1, h, ad_step):
@@ -1311,7 +1339,7 @@ def predictor_corrector(f, y0, t0, t1, h, ad_step):
     y = y[:, 1:k, :]
     print('PK k: ', k)
     max_error = max(errlist)
-    return y, max_error
+    return y, max_error, k
 
 
 def heun(f, y0, t0, t1, h, ad_step, mass, g):
@@ -1335,14 +1363,14 @@ def heun(f, y0, t0, t1, h, ad_step, mass, g):
     k = 1
     errlist = [0]
     eps = 5e-16
-    while h_sum < t1 and k < 50000:
+    while h_sum < t1 and k < 50001:
 
         v_pre = v[:, k - 1, :] + h * f(y[:, k - 1, :], mass, g)
         y_pre = y[:, k - 1, :] + h * v[:, k - 1, :] + h ** 2 * 0.5 * f(y[:, k - 1, :], mass, g)
 
         v[:, k, :] = 0.5 * v[:, k - 1, :] + 0.5 * (v_pre + h * f(y_pre, mass, g))
         y[:, k, :] = 0.5 * y[:, k - 1, :] + 0.5 * (
-                    y_pre + h * v[:, k - 1, :] + h ** 2 * 0.5 * f(y[:, k - 1, :], mass, g))
+                y_pre + h * v[:, k - 1, :] + h ** 2 * 0.5 * f(y[:, k - 1, :], mass, g))
 
         err = norm(
             mass[0] * f(y[:, k, :], mass, g)[0] + mass[1] * f(y[:, k, :], mass, g)[1] + mass[2] *
@@ -1366,15 +1394,16 @@ def heun(f, y0, t0, t1, h, ad_step, mass, g):
             h_sum += h
 
         t = t + h
-    y = y[:, 1:k, :]
+    y = y[:, :k, :]
     print('Heun k: ', k)
     max_error = max(errlist)
     print('Maximaler Error Heun: ', max_error)
-    return y, max_error
+
+    return y, errlist, k - 1, h_sum
 
 
-def generate_figures(method, title, names, colours):
-    y, err = method
+def generate_figures(method, title, names, colours, colours_marker):
+    y, errlist, k, t_stop = method
     fig = go.Figure(
         data=[go.Scatter(x=y[0, :, 0], y=y[0, :, 1],
                          mode="lines", name=names[0],
@@ -1384,13 +1413,73 @@ def generate_figures(method, title, names, colours):
                          line=dict(width=2, color=colours[1])),
               go.Scatter(x=y[2, :, 0], y=y[2, :, 1],
                          mode="lines", name=names[2],
-                         line=dict(width=2, color=colours[2]))],
+                         line=dict(width=2, color=colours[2]))
+              ],
         layout=go.Layout(
             xaxis=dict(autorange=True, zeroline=False, range=[-2, 2]),
             yaxis=dict(autorange=True, zeroline=False, range=[-2, 2]),
             title=title, hovermode="closest"),
     )
-    return fig
+    fig.add_trace(
+        go.Scatter(
+            mode='markers',
+            x=[y[0, 0, 0]],
+            y=[y[0, 0, 1]],
+            name='Start Value',
+            marker=dict(
+                color=colours_marker[0],
+                size=10,
+                line=dict(
+                    color=colours[0],
+                    width=2
+                )
+            ),
+            showlegend=False
+        ),
+    )
+    fig.add_trace(
+        go.Scatter(
+            mode='markers',
+            x=[y[1, 0, 0]],
+            y=[y[1, 0, 1]],
+            name='Start Value',
+            marker=dict(
+                color=colours_marker[1],
+                size=10,
+                line=dict(
+                    color=colours[1],
+                    width=2
+                )
+            ),
+            showlegend=False
+        ),
+    )
+    fig.add_trace(
+        go.Scatter(
+            mode='markers',
+            x=[y[2, 0, 0]],
+            y=[y[2, 0, 1]],
+            name='Start Value',
+            marker=dict(
+                color=colours_marker[2],
+                size=10,
+                line=dict(
+                    color=colours[2],
+                    width=2
+                )
+            ),
+            showlegend=False
+        )
+    )
+    parameter_infos = [dbc.Col(html.Ul([
+        html.Li(str('Mean Error: ' + str(np.mean(errlist)))),
+        html.Li(str('Max. Error: ' + str(max(errlist))))
+    ])),
+        dbc.Col([html.Ul([
+            html.Li(str('Total steps: ' + str(k))),
+            html.Li(str('End Time: ' + str(round(t_stop, 2))))
+        ])])]
+    return fig, parameter_infos
 
 
 def generate_error_figures(method, title, names, colours):
@@ -1418,13 +1507,15 @@ def generate_error_figures(method, title, names, colours):
 def fig_not_convergent(title):
     fig = px.scatter(x=[1, 1, 1, 1, 1, 1, 1, 1], y=[3, 2.75, 2.5, 2.25, 2, 1.75, 1.5, 0.75],
                      title=str(title + ': not convergent'))
-    return fig
+    dots = [html.Li('Not convergent!')]
+    return fig, dots
 
 
 def fig_empty():
     fig = px.scatter(x=[1, 1, 1, 1, 1, 1, 1, 1], y=[3, 2.75, 2.5, 2.25, 2, 1.75, 1.5, 0.75],
                      title='No method selected')
-    return fig
+    dots = []
+    return fig, dots
 
 
 """adStep_dict = {0: 'without AdStep', 1: 'AdStep'}
@@ -1454,7 +1545,7 @@ for i in range(1, 4):
         print(error_dict)
 
 error_data = pd.DataFrame(data=error_dict, index=['Explicit Euler', 'Implicit Euler', 'Runge-Kutta', 'Heun'])
-error_data.to_csv(path_or_buf='Error_Data.csv')"""
+error_data.to_csv(path_or_buf='csv_data/Error_Data.csv')"""
 
 """convOrdFE = (errFE2/errFE1)
 convOrdBE = (errBE2/errBE1)
