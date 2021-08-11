@@ -6,10 +6,9 @@ import dash_html_components as html
 import dash_bootstrap_components as dbc
 import numpy as np
 from numpy.linalg import norm
-from numpy import log10
 import plotly.graph_objects as go
 import plotly.express as px
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output
 import SupplementaryFiles.dash_reusable_components as drc
 
 t_start = 0

@@ -1,3 +1,9 @@
+"""
+Project for the course "Modelling interacting particle systems in science". Code by Verena Alton.
+Layout of the code: global variables for the starting values of the particles, dashboard layout, dashboard functions,
+numerical integration method functions, graph generating functions.
+"""
+
 from flask import Flask
 import pandas as pd
 import dash
@@ -6,7 +12,6 @@ import dash_html_components as html
 import dash_bootstrap_components as dbc
 import numpy as np
 from numpy.linalg import norm
-from numpy import log10
 import plotly.graph_objects as go
 import plotly.express as px
 from dash.dependencies import Input, Output, State
@@ -151,21 +156,81 @@ app.title = '3-Body Problem'
 app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, children=[
     # .container class is fixed, .container.scalable is scalable
     html.Div(className="banner", style={'background-color': '#333399', 'color': 'white'}, children=[
-        html.Div(className='container scalable', children=[
-            html.H2(html.A(
-                'The Three-Body Problem - Gravitational Astronomy',
-                href='https://github.com/Entonia314/ModIntPartSys',
-                style={
-                    'text-decoration': 'none',
-                    'color': 'inherit',
-                    'background-color': '#333399',
-                    'text-align': 'center'
-                }
-            )),
-        ]),
+        dbc.Row(children=[
+            dbc.Col(
+                html.H2(html.A(
+                    'The Three-Body Problem - Gravitational Astronomy',
+                    href='https://github.com/Entonia314/ModIntPartSys',
+                    style={
+                        'text-decoration': 'none',
+                        'color': 'inherit',
+                        'background-color': '#333399',
+                        'text-align': 'center'
+                    }
+                )), width={'size': 8, 'offset': 2}), ],
+        ),
     ]),
 
     dbc.Container(fluid=True, children=[
+        html.Section(
+            className='header',
+            style={"padding": "0px 0px 20px 0px", 'text-align': 'center',
+                   'color': '', 'background-color': ''},
+            children=[
+                html.Div(
+                    [
+                        dbc.Button(
+                            'About this Project',
+                            id="collapse-button",
+                            className="mb-3",
+                            color="light",
+                        ),
+                        dbc.Collapse(
+                            dbc.Card(dbc.CardBody(children=[
+                                html.H4('Three-Body Problem', style={'text-align': ''}),
+                                html.P(children=['''Knowing the masses, initial positions and initial velocities of three 
+                                        particles, one wants to deduce their positions at any later time. Since this 
+                                        system of 
+                                        ordinary differential equations cannot be solved analytically, four different 
+                                        methods of numerical integration 
+                                        were implemented. This dashboard means to compare the methods and show some 
+                                        interesting results and orbits. To learn more about the theory of the problem,
+                                        see the essay in the ''',
+                                                 html.A('Github', href='https://github.com/Entonia314/ModIntPartSys'),
+                                                 ''' repository.'''],
+                                       style={'font-size': '16px', 'text-align': 'justify', 'margin': '10px 50px 30px '
+                                                                                                      '50px'}),
+
+                                html.H4('Using the Dashboard', style={'text-align': ''}),
+                                html.P(children=['''There are two graphs to compare results, for each of them all 
+                                parameters can be chosen independently. The left card contains general options while 
+                                the right one holds model-specific parameters. Two types of models are implemented: a 
+                                simplified one and a simulation of the sun system with three celestial bodies at 
+                                once. To switch models, tick the respective one in the left card and and go to the 
+                                matching tab on the right card to choose parameters. The step size means the fineness 
+                                of the discretisation for the numerical approximation. A smaller step size will lead 
+                                to better results but demands higher computing capacity, so the calculation will need 
+                                some time (the tab in the browser says "Updating" while still computing). For an 
+                                automatic adaption of the step size, the "Adaptive Step Size" can be ticked. Here, 
+                                the numerical error of the calculation is approximated and the step size is 
+                                accordingly scaled down or up. In the graphs, the translucent points mark the 
+                                initial positions of the particles. To see an animation of the route of the 
+                                particles, press the "Play" button next to the graph. Since animations are a rather 
+                                new feature of Plotly, they are a bit buggy. If one wants to change parameters while 
+                                the animation is still running, please press "Pause" before changing. The particles 
+                                will continue their route with new parameters if "Play" is pressed again. See the ''',
+                                                 html.A('Github', href='https://github.com/Entonia314/ModIntPartSys'),
+                                                 ''' repository for the code of the program.''',
+                                                 ],
+                                       style={'font-size': '16px', 'text-align': 'justify', 'margin': '10px 50px 10px '
+                                                                                                      '50px'})]
+                            )),
+                            id="collapse",
+                        ),
+                    ]
+                )
+            ]
+        ),
         dbc.Row(
             [
                 dbc.Col(
@@ -260,7 +325,7 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                                         value=10
                                     ),
                                     drc.NamedRadioItems(
-                                        name='Adaptive Step-Size',
+                                        name='Adaptive Step Size',
                                         id='ad_step1',
                                         options=[{"label": " Yes", "value": 1},
                                                  {"label": " No", "value": 0}],
@@ -573,7 +638,7 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                                         value=10
                                     ),
                                     drc.NamedRadioItems(
-                                        name='Adaptive Step-Size',
+                                        name='Adaptive Step Size',
                                         id='ad_step2',
                                         options=[{"label": " Yes", "value": 1},
                                                  {"label": " No", "value": 0}],
@@ -809,6 +874,18 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                            )
 
 
+# Collapse function for the infos about the project
+@app.callback(
+    Output("collapse", "is_open"),
+    [Input("collapse-button", "n_clicks")],
+    [State("collapse", "is_open")],
+)
+def toggle_collapse(n, is_open):
+    if n:
+        return not is_open
+    return is_open
+
+
 @app.callback(
     Output(component_id='graph1', component_property='figure'),
     Output(component_id='param_infos1', component_property='children'),
@@ -827,7 +904,7 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
 )
 def update_figure(method, model, h, t_end, scenario, m1, m2, m3, o1, o2, o3, ad_step):
     if model == 1:
-        names = ['Object 1', 'Object 2', 'Object 3']
+        names = ['Agent 1', 'Agent 2', 'Agent 3']
         colours = ['green', 'blue', 'red']
         colours_marker = ['rgba(124, 201, 119, 0.5)', 'rgba(105, 134, 201, 0.5)', 'rgba(207, 52, 72, 0.5)']
         init_data = init_dict[scenario]
@@ -908,7 +985,7 @@ def update_figure(method, model, h, t_end, scenario, m1, m2, m3, o1, o2, o3, ad_
 )
 def update_figure(method, model, h, t_end, scenario, m1, m2, m3, o1, o2, o3, ad_step):
     if model == 1:
-        names = ['Object 1', 'Object 2', 'Object 3']
+        names = ['Agent 1', 'Agent 2', 'Agent 3']
         colours = ['green', 'blue', 'red']
         colours_marker = ['rgba(124, 201, 119, 0.5)', 'rgba(105, 134, 201, 0.5)', 'rgba(207, 52, 72, 0.5)']
         init_data = init_dict[scenario]
@@ -1004,8 +1081,11 @@ def forward_euler(f, y0, t0, t1, h, ad_step, mass, g):
     :param y0: list of floats or ints, initial values y(t0)=y0
     :param t0: float or int, start of interval for parameter t
     :param t1: float or int, end of interval for parameter t
-    :param h: float or int, step-size
-    :return: two lists of floats, approximation of y at interval t0-t1 in step-size h and interval list
+    :param h: float, step-size
+    :param ad_step: int, 0 if adaptive step size is deactivated and 1 if it activated
+    :param mass: list of floats or ints, masses of particles
+    :param g: float or int, gravitational constant
+    :return: list of postitions, list of approximated errors at each step, number of steps, total time
     """
     h_min = h / 256
     h_max = h
@@ -1053,13 +1133,15 @@ def forward_euler(f, y0, t0, t1, h, ad_step, mass, g):
 
 def runge_kutta(f, y0, t0, t1, h, mass, g):
     """
-    Explicit Euler method for systems of differential equations: y' = f(t, y); with f,y,y' n-dimensional vectors.
+    Runge-Kutta method of order 3 for systems of differential equations: y' = f(t, y); with f,y,y' n-dimensional vectors.
     :param f: list of functions
     :param y0: list of floats or ints, initial values y(t0)=y0
     :param t0: float or int, start of interval for parameter t
     :param t1: float or int, end of interval for parameter t
-    :param h: float or int, step-size
-    :return: two lists of floats, approximation of y at interval t0-t1 in step-size h and interval list
+    :param h: float, step-size
+    :param mass: list of floats or ints, masses of particles
+    :param g: float or int, gravitational constant
+    :return: list of postitions, list of approximated errors at each step, number of steps, total time
     """
     N = int(np.ceil((t1 - t0) / h))
     t = t0
@@ -1094,13 +1176,16 @@ CT = np.array([-1 / 150, 0, 3 / 100, -16 / 75, -1 / 20, 6 / 25])
 
 def runge_kutta_4(f, y0, t0, t1, h, ad_step, mass, g):
     """
-    Explicit Euler method for systems of differential equations: y' = f(t, y); with f,y,y' n-dimensional vectors.
+    Runge-Kutta-Fehlberg method for systems of differential equations: y' = f(t, y); with f,y,y' n-dimensional vectors.
     :param f: list of functions
     :param y0: list of floats or ints, initial values y(t0)=y0
     :param t0: float or int, start of interval for parameter t
     :param t1: float or int, end of interval for parameter t
-    :param h: float or int, step-size
-    :return: two lists of floats, approximation of y at interval t0-t1 in step-size h and interval list
+    :param h: float, step-size
+    :param ad_step: int, 0 if adaptive step size is deactivated and 1 if it activated
+    :param mass: list of floats or ints, masses of particles
+    :param g: float or int, gravitational constant
+    :return: list of postitions, list of approximated errors at each step, number of steps, total time
     """
     h_min = h / 16
     h_max = h
@@ -1211,13 +1296,16 @@ def newton_raphson(f, g, x0, e, N):
 
 def backward_euler(f, y0, t0, t1, h, ad_step, mass, g):
     """
-    Explicit Euler method for systems of differential equations: y' = f(t, y); with f,y,y' n-dimensional vectors.
+    Implicit Euler method for systems of differential equations: y' = f(t, y); with f,y,y' n-dimensional vectors.
     :param f: list of functions
     :param y0: list of floats or ints, initial values y(t0)=y0
     :param t0: float or int, start of interval for parameter t
     :param t1: float or int, end of interval for parameter t
-    :param h: float or int, step-size
-    :return: two lists of floats, approximation of y at interval t0-t1 in step-size h and interval list
+    :param h: float, step-size
+    :param ad_step: int, 0 if adaptive step size is deactivated and 1 if it activated
+    :param mass: list of floats or ints, masses of particles
+    :param g: float or int, gravitational constant
+    :return: list of postitions, list of approximated errors at each step, number of steps, total time
     """
     h_min = h / 16
     h_max = h
@@ -1286,15 +1374,18 @@ def backward_euler(f, y0, t0, t1, h, ad_step, mass, g):
     return y, errlist, k - 1, h_sum
 
 
-def predictor_corrector(f, y0, t0, t1, h, ad_step):
+def predictor_corrector(f, y0, t0, t1, h, ad_step, mass, g):
     """
-    Explicit Euler method for systems of differential equations: y' = f(t, y); with f,y,y' n-dimensional vectors.
+    Predictor-Corrector method for systems of differential equations: y' = f(t, y); with f,y,y' n-dimensional vectors.
     :param f: list of functions
     :param y0: list of floats or ints, initial values y(t0)=y0
     :param t0: float or int, start of interval for parameter t
     :param t1: float or int, end of interval for parameter t
     :param h: float or int, step-size
-    :return: two lists of floats, approximation of y at interval t0-t1 in step-size h and interval list
+    :param ad_step: int, 0 if adaptive step size is deactivated and 1 if it activated
+    :param mass: list of floats or ints, masses of particles
+    :param g: float or int, gravitational constant
+    :return: list of postitions, list of approximated errors at each step, number of steps, total time
     """
     v = np.zeros((len(y0), 1000000, 2))
     y = np.zeros((len(y0), 1000000, 2))
@@ -1309,14 +1400,14 @@ def predictor_corrector(f, y0, t0, t1, h, ad_step):
     eps = 1e-15
     while h_sum < t1 and k < 50000:
 
-        y_pre = y[:, k - 1, :] + h * v[:, k - 1, :] + h ** 2 * 0.5 * f(t, y[:, k - 1, :])
+        y_pre = y[:, k - 1, :] + h * v[:, k - 1, :] + h ** 2 * 0.5 * f(y[:, k - 1, :], mass, g)
 
         for i in range(len(y0)):
-            v[i, k, :] = v[i, k - 1, :] + h * f(t, y_pre)[i]
+            v[i, k, :] = v[i, k - 1, :] + h * f(y_pre, mass, g)[i]
             y[i, k, :] = y[i, k - 1, :] + h * v[i, k - 1, :]
 
         err = norm(
-            mass[0] * f(t, y[:, k, :])[0] + mass[1] * f(t, y[:, k, :])[1] + mass[2] * f(t, y[:, k, :])[2])
+            mass[0] * f(t, y[:, k, :])[0] + mass[1] * f(y[:, k, :], mass, g)[1] + mass[2] * f(y[:, k, :], mass, g)[2])
         errlist.append(err)
 
         if ad_step == 1:
@@ -1330,7 +1421,7 @@ def predictor_corrector(f, y0, t0, t1, h, ad_step):
             else:
                 k = k + 1
                 h_sum = h_sum + h
-                # print('h zu klein')
+
         else:
             k = k + 1
             h_sum += h
@@ -1339,18 +1430,21 @@ def predictor_corrector(f, y0, t0, t1, h, ad_step):
     y = y[:, 1:k, :]
     print('PK k: ', k)
     max_error = max(errlist)
-    return y, max_error, k
+    return y, errlist, k - 1, h_sum
 
 
 def heun(f, y0, t0, t1, h, ad_step, mass, g):
     """
-    Explicit Euler method for systems of differential equations: y' = f(t, y); with f,y,y' n-dimensional vectors.
+    Heun method for systems of differential equations: y' = f(t, y); with f,y,y' n-dimensional vectors.
     :param f: list of functions
     :param y0: list of floats or ints, initial values y(t0)=y0
     :param t0: float or int, start of interval for parameter t
     :param t1: float or int, end of interval for parameter t
-    :param h: float or int, step-size
-    :return: two lists of floats, approximation of y at interval t0-t1 in step-size h and interval list
+    :param h: float, step-size
+    :param ad_step: int, 0 if adaptive step size is deactivated and 1 if it activated
+    :param mass: list of floats or ints, masses of particles
+    :param g: float or int, gravitational constant
+    :return: list of postitions, list of approximated errors at each step, number of steps, total time
     """
     v = np.zeros((len(y0), 1000000, 2))
     y = np.zeros((len(y0), 1000000, 2))
@@ -1434,8 +1528,8 @@ def generate_figures(method, title, names, colours, colours_marker):
             updatemenus=[dict(type="buttons",
                               buttons=[dict(label="Play",
                                             method="animate",
-                                            args=[None, {"frame": {"duration": 50, "redraw": False},
-                                                         "fromcurrent": True, "transition": {"duration": 30,
+                                            args=[None, {"frame": {"duration": 30, "redraw": False},
+                                                         "fromcurrent": True, "transition": {"duration": 10,
                                                                                              "easing": "quadratic-in-out"}}]),
                                        dict(label="Pause",
                                             method="animate",
@@ -1457,7 +1551,7 @@ def generate_figures(method, title, names, colours, colours_marker):
                            marker=dict(color=colours[2], size=10))
             ])
 
-            for n in range(k)]
+            for n in range(k + 1)]
     )
     fig.add_trace(
         go.Scatter(
@@ -1521,28 +1615,6 @@ def generate_figures(method, title, names, colours, colours_marker):
     return fig, parameter_infos
 
 
-def generate_error_figures(method, title, names, colours):
-    y_rk = runge_kutta_4(f, inits1, 0, 10, 0.01)
-    y_meth, t_meth = method
-    y = np.absolute(y_rk - y_meth)
-    fig = go.Figure(
-        data=[go.Scatter(x=y[0, :, 0], y=y[0, :, 1],
-                         mode="lines", name=names[0],
-                         line=dict(width=2, color=colours[0])),
-              go.Scatter(x=y[1, :, 0], y=y[1, :, 1],
-                         mode="lines", name=names[1],
-                         line=dict(width=2, color=colours[1])),
-              go.Scatter(x=y[2, :, 0], y=y[2, :, 1],
-                         mode="lines", name=names[2],
-                         line=dict(width=2, color=colours[2]))],
-        layout=go.Layout(
-            xaxis=dict(autorange=True, zeroline=False, range=[-2, 2]),
-            yaxis=dict(autorange=True, zeroline=False, range=[-2, 2]),
-            title=title, hovermode="closest"),
-    )
-    return fig
-
-
 def fig_not_convergent(title):
     fig = px.scatter(x=[1, 1, 1, 1, 1, 1, 1, 1], y=[3, 2.75, 2.5, 2.25, 2, 1.75, 1.5, 0.75],
                      title=str(title + ': not convergent'))
@@ -1557,6 +1629,7 @@ def fig_empty():
     return fig, dots
 
 
+# Get csv of maximal errors, deactivated since using much computing capacity
 """adStep_dict = {0: 'without AdStep', 1: 'AdStep'}
 error_dict = {}
 
