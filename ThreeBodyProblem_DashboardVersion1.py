@@ -79,9 +79,6 @@ RR = 1.496e11  # Normalizing distance in km (= 1 AU)
 MM = 6e24  # Normalizing mass (mass of earth)
 TT = 365 * 24 * 60 * 60.0  # Normalizing time (1 year)
 
-FF = (G * MM ** 2) / RR ** 2  # Unit force
-EE = FF * RR  # Unit energy
-
 GG = (MM * G * TT ** 2) / (RR ** 3)
 
 Mear = Mear / MM  # Normalized mass of Earth
@@ -92,8 +89,6 @@ Mmoo = Mmoo / MM  # Normalized mass of Moon
 Mven = Mven / MM  # Normalized mass of Venus
 Mnep = Mnep / MM
 Miss = Miss / MM
-
-# Initialization
 
 rear = [1, 0]  # initial position of earth
 rjup = [5.2, 0]  # initial position of Jupiter
@@ -1022,46 +1017,40 @@ def fig_not_convergent(title):
     return fig
 
 
-"""adStep_dict = {0: 'without AdStep', 1: 'AdStep'}
-error_dict = {}
+# Get csv of maximal errors
+def error_data_to_csv():
 
-for i in range(1, 4):
+    adStep_dict = {0: 'without AdStep', 1: 'AdStep'}
+    error_dict = {}
 
-    for j in [0, 1]:
+    for i in range(1, 4):
 
-        y, errFE1 = forward_euler(f, init_dict[i], 0, 10, 0.01, j)
-        y, errFE2 = forward_euler(f, init_dict[i], 0, 10, 0.001, j)
-        try:
-            y, errBE1 = backward_euler(f, init_dict[i], 0, 10, 0.01, j)
-        except:
-            errB1 = 'not convergent'
-        try:
-            y, errBE2 = backward_euler(f, init_dict[i], 0, 10, 0.001, j)
-        except:
-            errB2 = 'not convergent'
-        y, errRK1 = runge_kutta_4(f, init_dict[i], 0, 10, 0.01, j)
-        y, errRK2 = runge_kutta_4(f, init_dict[i], 0, 10, 0.001, j)
-        y, errH1 = heun(f, init_dict[i], 0, 10, 0.01, j)
-        y, errH2 = heun(f, init_dict[i], 0, 10, 0.001, j)
+        for j in [0, 1]:
 
-        error_dict[str('Szenario '+str(i)+', '+adStep_dict[j]+', h=0.01')] = [errFE1, errBE1, errRK1, errH1]
-        error_dict[str('Szenario '+str(i)+', '+adStep_dict[j]+', h=0.001')] = [errFE2, errBE2, errRK2, errH2]
-        print(error_dict)
+            y, errFE1 = forward_euler(f, init_dict[i], 0, 10, 0.01, j)
+            y, errFE2 = forward_euler(f, init_dict[i], 0, 10, 0.001, j)
+            try:
+                y, errBE1 = backward_euler(f, init_dict[i], 0, 10, 0.01, j)
+            except:
+                errBE1 = 'not convergent'
+            try:
+                y, errBE2 = backward_euler(f, init_dict[i], 0, 10, 0.001, j)
+            except:
+                errBE2 = 'not convergent'
+            y, errRK1 = runge_kutta_4(f, init_dict[i], 0, 10, 0.01, j)
+            y, errRK2 = runge_kutta_4(f, init_dict[i], 0, 10, 0.001, j)
+            y, errH1 = heun(f, init_dict[i], 0, 10, 0.01, j)
+            y, errH2 = heun(f, init_dict[i], 0, 10, 0.001, j)
 
-error_data = pd.DataFrame(data=error_dict, index=['Explicit Euler', 'Implicit Euler', 'Runge-Kutta', 'Heun'])
-error_data.to_csv(path_or_buf='csv_data/Error_Data.csv')"""
+            error_dict[str('Szenario '+str(i)+', '+adStep_dict[j]+', h=0.01')] = [errFE1, errBE1, errRK1, errH1]
+            error_dict[str('Szenario '+str(i)+', '+adStep_dict[j]+', h=0.001')] = [errFE2, errBE2, errRK2, errH2]
+            print(error_dict)
 
-"""convOrdFE = (errFE2/errFE1)
-convOrdBE = (errBE2/errBE1)
-convOrdRK = (errRK2/errRK1)
-convOrdPK = (errH2/errH1)
-
-print('Konvergenzordnung Expl. Euler: ', convOrdFE)
-print('Konvergenzordnung Impl. Euler: ', convOrdBE)
-print('Konvergenzordnung RKF: ', convOrdRK)
-print('Konvergenzordnung PK: ', convOrdPK)"""
+    error_data = pd.DataFrame(data=error_dict, index=['Explicit Euler', 'Implicit Euler', 'Runge-Kutta', 'Heun'])
+    error_data.to_csv(path_or_buf='csv_data/Error_Data.csv')
 
 
+# Get results as csv data
 def array_to_csv(y, name):
     x0 = y[0, :, 0]
     y0 = y[0, :, 1]
@@ -1075,11 +1064,6 @@ def array_to_csv(y, name):
     df.to_csv(name)
     return df
 
-
-"""y_python_1000, t = predictor_corrector(f, inits3, 0, 10, 1000, 0)
-y_python_10000, t = predictor_corrector(f, inits3, 0, 10, 10000, 0)
-array_to_csv(y_python_1000, 'PredCorr_0-10_1000.csv')
-array_to_csv(y_python_10000, 'PredCorr-10_10000.csv')"""
 
 if __name__ == '__main__':
     app.run_server(debug=True, port=8050)

@@ -16,6 +16,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 from dash.dependencies import Input, Output, State
 import SupplementaryFiles.dash_reusable_components as drc
+import time
 
 t_start = 0
 mass = [1, 1, 1]
@@ -78,15 +79,13 @@ Mmoo = 7.346e22  # Mass of Earth-Moon
 Mven = 4.875e24  # Mass of Venus
 Mnep = 1.024e26  # Mass of Neptun
 Miss = 440725  # Mass of ISS
+Mtit = 1.345e23  # Mass of Titan
 
 G = 6.673e-11  # Gravitational Constant
 
 RR = 1.496e11  # Normalizing distance in km (= 1 AU)
 MM = 6e24  # Normalizing mass (mass of earth)
 TT = 365 * 24 * 60 * 60.0  # Normalizing time (1 year)
-
-FF = (G * MM ** 2) / RR ** 2  # Unit force
-EE = FF * RR  # Unit energy
 
 GG = (MM * G * TT ** 2) / (RR ** 3)
 
@@ -98,8 +97,7 @@ Mmoo = Mmoo / MM  # Normalized mass of Moon
 Mven = Mven / MM  # Normalized mass of Venus
 Mnep = Mnep / MM
 Miss = Miss / MM
-
-# Initialization
+Mtit = Mtit / MM
 
 rear = [1, 0]  # initial position of earth
 rjup = [5.2, 0]  # initial position of Jupiter
@@ -109,6 +107,7 @@ rmoo = [rear[0] + 0.00257, 0]
 rven = [0.723, 0]
 rnep = [30.047, 0]
 riss = [rear[0] + (420e3 / RR), 0]
+rtit = [rsat[0] + (1.221830e9 / RR), 0]
 
 magear = np.sqrt(Msun * GG / rear[0])  # Magnitude of Earth's initial velocity
 magjup = 13.06e3 * TT / RR  # Magnitude of Jupiter's initial velocity
@@ -117,6 +116,7 @@ magmoo = 1.022e3 * TT / RR  # Magnitude of Moon's initial velocity
 magven = 35.02e3 * TT / RR  # Magnitude of Venus' initial velocity
 magnep = 5.43e3 * TT / RR
 magiss = 7.66e3 * TT / RR
+magtit = 5.57e3 * TT / RR
 
 vear = [0, magear * 1.0]  # Initial velocity vector for Earth.Taken to be along y direction as ri is on x axis.
 vjup = [0, magjup * 1.0]  # Initial velocity vector for Jupiter
@@ -126,20 +126,25 @@ vmoo = [0, magear + magmoo]  # Initial velocity vector for Moon
 vven = [0, magven]  # Initial velocity vector for Venus
 vnep = [0, magnep]
 viss = [0, magiss + magear]
+vtit = [0, magsat + magtit]
 
 method_dict = {'forward_euler': 'Explizites Euler-Verfahren', 'backward_euler': 'Implizites Euler-Verfahren'}
 init_dict = {1: inits1, 2: inits2, 3: inits3, 4: inits4, 5: inits5, 6: inits6, 7: inits7}
-mass_dict = {'sun': Msun, 'sat': Msat, 'jup': Mjup, 'ear': Mear, 'moo': Mmoo, 'ven': Mven, 'nep': Mnep, 'iss': Miss}
-r_dict = {'sun': rsun, 'sat': rsat, 'jup': rjup, 'ear': rear, 'moo': rmoo, 'ven': rven, 'nep': rnep, 'iss': riss}
-v_dict = {'sun': vsun, 'sat': vsat, 'jup': vjup, 'ear': vear, 'moo': vmoo, 'ven': vven, 'nep': vnep, 'iss': viss}
+mass_dict = {'sun': Msun, 'sat': Msat, 'jup': Mjup, 'ear': Mear, 'moo': Mmoo, 'ven': Mven, 'nep': Mnep, 'iss': Miss,
+             'tit': Mtit}
+r_dict = {'sun': rsun, 'sat': rsat, 'jup': rjup, 'ear': rear, 'moo': rmoo, 'ven': rven, 'nep': rnep, 'iss': riss,
+          'tit': rtit}
+v_dict = {'sun': vsun, 'sat': vsat, 'jup': vjup, 'ear': vear, 'moo': vmoo, 'ven': vven, 'nep': vnep, 'iss': viss,
+          'tit': vtit}
 colour_dict = {'sun': 'yellow', 'sat': 'grey', 'jup': 'orange', 'ear': '#4d7bd1', 'moo': 'darkgrey', 'ven': '#d1996f',
-               'nep': '#2a1a82', 'iss': 'purple'}
+               'nep': '#2a1a82', 'iss': 'purple', 'tit': 'rgb(219, 196, 61)'}
 colour_marker_dict = {'sun': 'rgba(242, 238, 124, 0.5)', 'sat': 'rgba(150, 150, 131, 0.5)',
                       'jup': 'rgba(237, 180, 45, 0.5)', 'ear': 'rgba(89, 110, 247, 0.5)',
                       'moo': 'rgba(99, 103, 130, 0.5)', 'ven': 'rgba(173, 173, 101, 0.5)',
-                      'nep': 'rgba(54, 48, 112, 0.5)', 'iss': 'rgba(104, 46, 140, 0.5)'}
+                      'nep': 'rgba(54, 48, 112, 0.5)', 'iss': 'rgba(104, 46, 140, 0.5)',
+                      'tit': 'rgba(252, 229, 88, 0.5)'}
 name_dict = {'sun': 'Sun', 'sat': 'Saturn', 'jup': 'Jupiter', 'ear': 'Earth', 'moo': 'Moon', 'ven': 'Venus',
-             'nep': 'Neptune', 'iss': 'ISS'}
+             'nep': 'Neptune', 'iss': 'ISS', 'tit': 'Titan'}
 
 # Here is were the dash app begins
 # Standard css style sheet recommended by Dash
@@ -196,7 +201,7 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                                         were implemented. This dashboard means to compare the methods and show some 
                                         interesting results and orbits. To learn more about the theory of the problem,
                                         see the essay in the ''',
-                                                 html.A('Github', href='https://github.com/Entonia314/ModIntPartSys'),
+                                                 html.A('GitHub', href='https://github.com/Entonia314/ModIntPartSys'),
                                                  ''' repository.'''],
                                        style={'font-size': '16px', 'text-align': 'justify', 'margin': '10px 50px 30px '
                                                                                                       '50px'}),
@@ -219,7 +224,7 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                                 new feature of Plotly, they are a bit buggy. If one wants to change parameters while 
                                 the animation is still running, please press "Pause" before changing. The particles 
                                 will continue their route with new parameters if "Play" is pressed again. See the ''',
-                                                 html.A('Github', href='https://github.com/Entonia314/ModIntPartSys'),
+                                                 html.A('GitHub', href='https://github.com/Entonia314/ModIntPartSys'),
                                                  ''' repository for the code of the program.''',
                                                  ],
                                        style={'font-size': '16px', 'text-align': 'justify', 'margin': '10px 50px 10px '
@@ -244,21 +249,25 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                     children=[
                         html.H3('Graph 1', style={'text-align': 'center'}),
                         dbc.Row(
-                            html.Div(
-                                id='div_graph1',
-                                style={
-                                    'text-decoration': 'none',
-                                    'color': 'black',
-                                    'background-color': 'white',
-                                    'text-align': '',
-                                    'margin': '0px 0px 30px 50px'
-                                },
+                            dcc.Loading(
+                                id='loading-1',
+                                type='circle',
                                 children=[
-                                    dcc.Graph(
-                                        id='graph1'
-                                    ),
-                                    dbc.Row(id='param_infos1')],
-                            ),
+                                    html.Div(
+                                        id='div_graph1',
+                                        style={
+                                            'text-decoration': 'none',
+                                            'color': 'black',
+                                            'background-color': 'white',
+                                            'text-align': '',
+                                            'margin': '0px 0px 30px 50px'
+                                        },
+                                        children=[
+                                            dcc.Graph(
+                                                id='graph1'
+                                            ),
+                                            dbc.Row(id='param_infos1')],
+                                    )]),
                         ),
                         dbc.Row([dbc.Col([
                             dbc.Card(
@@ -451,6 +460,10 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                                                             'value': 'sat'
                                                         },
                                                         {
+                                                            'label': 'Titan',
+                                                            'value': 'tit'
+                                                        },
+                                                        {
                                                             'label': 'Neptune',
                                                             'value': 'nep'
                                                         },
@@ -490,6 +503,10 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                                                         {
                                                             'label': 'Saturn',
                                                             'value': 'sat'
+                                                        },
+                                                        {
+                                                            'label': 'Titan',
+                                                            'value': 'tit'
                                                         },
                                                         {
                                                             'label': 'Neptune',
@@ -533,6 +550,10 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                                                             'value': 'sat'
                                                         },
                                                         {
+                                                            'label': 'Titan',
+                                                            'value': 'tit'
+                                                        },
+                                                        {
                                                             'label': 'Neptune',
                                                             'value': 'nep'
                                                         },
@@ -557,21 +578,25 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                     children=[
                         html.H3('Graph 2', style={'text-align': 'center'}),
                         dbc.Row(
-                            html.Div(
-                                id='div_graph2',
-                                style={
-                                    'text-decoration': 'none',
-                                    'color': 'black',
-                                    'background-color': 'white',
-                                    'text-align': '',
-                                    'margin': '0px 0px 30px 50px'
-                                },
+                            dcc.Loading(
+                                id='loading-2',
+                                type='circle',
                                 children=[
-                                    dcc.Graph(
-                                        id='graph2'
-                                    ),
-                                    dbc.Row(id='param_infos2')],
-                            ),
+                                    html.Div(
+                                        id='div_graph2',
+                                        style={
+                                            'text-decoration': 'none',
+                                            'color': 'black',
+                                            'background-color': 'white',
+                                            'text-align': '',
+                                            'margin': '0px 0px 30px 50px'
+                                        },
+                                        children=[
+                                            dcc.Graph(
+                                                id='graph2'
+                                            ),
+                                            dbc.Row(id='param_infos2')],
+                                    )]),
                         ),
                         dbc.Row([dbc.Col([
                             dbc.Card(
@@ -764,6 +789,10 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                                                             'value': 'sat'
                                                         },
                                                         {
+                                                            'label': 'Titan',
+                                                            'value': 'tit'
+                                                        },
+                                                        {
                                                             'label': 'Neptune',
                                                             'value': 'nep'
                                                         },
@@ -803,6 +832,10 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                                                         {
                                                             'label': 'Saturn',
                                                             'value': 'sat'
+                                                        },
+                                                        {
+                                                            'label': 'Titan',
+                                                            'value': 'tit'
                                                         },
                                                         {
                                                             'label': 'Neptune',
@@ -846,6 +879,10 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                                                             'value': 'sat'
                                                         },
                                                         {
+                                                            'label': 'Titan',
+                                                            'value': 'tit'
+                                                        },
+                                                        {
                                                             'label': 'Neptune',
                                                             'value': 'nep'
                                                         },
@@ -887,7 +924,7 @@ def toggle_collapse(n, is_open):
 
 
 @app.callback(
-    Output(component_id='graph1', component_property='figure'),
+    Output(component_id='loading-1', component_property='children'),
     Output(component_id='param_infos1', component_property='children'),
     Input(component_id='method1', component_property='value'),
     Input(component_id='model1', component_property='value'),
@@ -903,6 +940,7 @@ def toggle_collapse(n, is_open):
     Input(component_id='ad_step1', component_property='value')
 )
 def update_figure(method, model, h, t_end, scenario, m1, m2, m3, o1, o2, o3, ad_step):
+    time.sleep(1)
     if model == 1:
         names = ['Agent 1', 'Agent 2', 'Agent 3']
         colours = ['green', 'blue', 'red']
@@ -933,7 +971,8 @@ def update_figure(method, model, h, t_end, scenario, m1, m2, m3, o1, o2, o3, ad_
                                              names, colours, colours_marker)
         else:
             graph1, dots1 = fig_empty()
-        return graph1, dots1
+        div_graph1 = generate_div_graph(graph1, 1)
+        return div_graph1, dots1
     elif model == 2:
         g = GG
         names = [name_dict[o1], name_dict[o2], name_dict[o3]]
@@ -964,11 +1003,12 @@ def update_figure(method, model, h, t_end, scenario, m1, m2, m3, o1, o2, o3, ad_
                                              names, colours, colours_marker)
         else:
             graph1, dots1 = fig_empty()
-        return graph1, dots1
+        div_graph1 = generate_div_graph(graph1, 1)
+        return div_graph1, dots1
 
 
 @app.callback(
-    Output(component_id='graph2', component_property='figure'),
+    Output(component_id='loading-2', component_property='children'),
     Output(component_id='param_infos2', component_property='children'),
     Input(component_id='method2', component_property='value'),
     Input(component_id='model2', component_property='value'),
@@ -1014,7 +1054,8 @@ def update_figure(method, model, h, t_end, scenario, m1, m2, m3, o1, o2, o3, ad_
                                              names, colours, colours_marker)
         else:
             graph2, dots2 = fig_empty()
-        return graph2, dots2
+        div_graph2 = generate_div_graph(graph2, 2)
+        return div_graph2, dots2
     elif model == 2:
         g = GG
         names = [name_dict[o1], name_dict[o2], name_dict[o3]]
@@ -1045,7 +1086,8 @@ def update_figure(method, model, h, t_end, scenario, m1, m2, m3, o1, o2, o3, ad_
                                              names, colours, colours_marker)
         else:
             graph2, dots2 = fig_empty()
-        return graph2, dots2
+        div_graph2 = generate_div_graph(graph2, 2)
+        return div_graph2, dots2
 
 
 def f(y, mass, g):
@@ -1629,48 +1671,74 @@ def fig_empty():
     return fig, dots
 
 
-# Get csv of maximal errors, deactivated since using much computing capacity
-"""adStep_dict = {0: 'without AdStep', 1: 'AdStep'}
-error_dict = {}
+def generate_div_graph(graph, graph_nr):
+    """
+    Generate dashboard environment for graph
+    :param graph: plotly figure
+    :param graph_nr: int, for id of bullet points
+    :return: html component
+    """
+    div_graph = html.Div(
+        style={
+            'text-decoration': 'none',
+            'color': 'black',
+            'background-color': 'white',
+            'text-align': '',
+            'margin': '0px 0px 30px 50px'
+        },
+        children=[
+            dcc.Graph(
+                figure=graph
+            ),
+            dbc.Row(id=str('param_infos'+str(graph_nr)))],
+    )
+    return div_graph
 
-for i in range(1, 4):
 
-    for j in [0, 1]:
+def error_data_to_csv():
+    """
+    Get csv of maximal errors
+    :return: nothing, csv will be saved into repository 'csv_data'
+    """
+    g = 1
+    m = [1, 1, 1]
+    adStep_dict = {0: 'without AdStep', 1: 'AdStep'}
+    error_dict = {}
 
-        y, errFE1 = forward_euler(f, init_dict[i], 0, 10, 0.01, j)
-        y, errFE2 = forward_euler(f, init_dict[i], 0, 10, 0.001, j)
-        try:
-            y, errBE1 = backward_euler(f, init_dict[i], 0, 10, 0.01, j)
-        except:
-            errB1 = 'not convergent'
-        try:
-            y, errBE2 = backward_euler(f, init_dict[i], 0, 10, 0.001, j)
-        except:
-            errB2 = 'not convergent'
-        y, errRK1 = runge_kutta_4(f, init_dict[i], 0, 10, 0.01, j)
-        y, errRK2 = runge_kutta_4(f, init_dict[i], 0, 10, 0.001, j)
-        y, errH1 = heun(f, init_dict[i], 0, 10, 0.01, j)
-        y, errH2 = heun(f, init_dict[i], 0, 10, 0.001, j)
+    for i in range(1, 4):
 
-        error_dict[str('Szenario '+str(i)+', '+adStep_dict[j]+', h=0.01')] = [errFE1, errBE1, errRK1, errH1]
-        error_dict[str('Szenario '+str(i)+', '+adStep_dict[j]+', h=0.001')] = [errFE2, errBE2, errRK2, errH2]
-        print(error_dict)
+        for j in [0, 1]:
 
-error_data = pd.DataFrame(data=error_dict, index=['Explicit Euler', 'Implicit Euler', 'Runge-Kutta', 'Heun'])
-error_data.to_csv(path_or_buf='csv_data/Error_Data.csv')"""
+            y, errFE1, n, t1 = forward_euler(f, init_dict[i], 0, 10, 0.01, j, m, g)
+            y, errFE2, n, t1 = forward_euler(f, init_dict[i], 0, 10, 0.001, j, m, g)
+            try:
+                y, errBE1, n, t1 = backward_euler(f, init_dict[i], 0, 10, 0.01, j, m, g)
+            except:
+                errBE1 = 'not convergent'
+            try:
+                y, errBE2, n, t1 = backward_euler(f, init_dict[i], 0, 10, 0.001, j, m, g)
+            except:
+                errBE2 = 'not convergent'
+            y, errRK1, n, t1 = runge_kutta_4(f, init_dict[i], 0, 10, 0.01, j, m, g)
+            y, errRK2, n, t1 = runge_kutta_4(f, init_dict[i], 0, 10, 0.001, j, m, g)
+            y, errH1, n, t1 = heun(f, init_dict[i], 0, 10, 0.01, j, m, g)
+            y, errH2, n, t1 = heun(f, init_dict[i], 0, 10, 0.001, j, m, g)
 
-"""convOrdFE = (errFE2/errFE1)
-convOrdBE = (errBE2/errBE1)
-convOrdRK = (errRK2/errRK1)
-convOrdPK = (errH2/errH1)
+            error_dict[str('Szenario '+str(i)+', '+adStep_dict[j]+', h=0.01')] = [errFE1, errBE1, errRK1, errH1]
+            error_dict[str('Szenario '+str(i)+', '+adStep_dict[j]+', h=0.001')] = [errFE2, errBE2, errRK2, errH2]
+            print(error_dict)
 
-print('Konvergenzordnung Expl. Euler: ', convOrdFE)
-print('Konvergenzordnung Impl. Euler: ', convOrdBE)
-print('Konvergenzordnung RKF: ', convOrdRK)
-print('Konvergenzordnung PK: ', convOrdPK)"""
+    error_data = pd.DataFrame(data=error_dict, index=['Explicit Euler', 'Implicit Euler', 'Runge-Kutta', 'Heun'])
+    error_data.to_csv(path_or_buf='csv_data/Error_Data.csv')
 
 
 def array_to_csv(y, name):
+    """
+    Get results as csv data
+    :param y: results
+    :param name:
+    :return:
+    """
     x0 = y[0, :, 0]
     y0 = y[0, :, 1]
     x1 = y[1, :, 0]
@@ -1683,11 +1751,6 @@ def array_to_csv(y, name):
     df.to_csv(name)
     return df
 
-
-"""y_python_1000, t = predictor_corrector(f, inits3, 0, 10, 1000, 0)
-y_python_10000, t = predictor_corrector(f, inits3, 0, 10, 10000, 0)
-array_to_csv(y_python_1000, 'PredCorr_0-10_1000.csv')
-array_to_csv(y_python_10000, 'PredCorr-10_10000.csv')"""
 
 if __name__ == '__main__':
     app.run_server(debug=True, port=8050)
