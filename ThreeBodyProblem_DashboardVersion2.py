@@ -161,7 +161,7 @@ app.title = '3-Body Problem'
 app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, children=[
     # .container class is fixed, .container.scalable is scalable
     html.Div(className="banner", style={'background-color': '#333399', 'color': 'white'}, children=[
-        dbc.Row(children=[
+        dbc.Row(justify='center', children=[
             dbc.Col(
                 html.H2(html.A(
                     'The Three-Body Problem - Gravitational Astronomy',
@@ -173,7 +173,7 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                         'text-align': 'center'
                     }
                 )), width={'size': 8, 'offset': 2}), ],
-        ),
+                ),
     ]),
 
     dbc.Container(fluid=True, children=[
@@ -266,9 +266,9 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                                             dcc.Graph(
                                                 id='graph1'
                                             ),
-                                            dbc.Row(id='param_infos1')],
+                                            dbc.Row(id='param_infos1', justify='center')],
                                     )]),
-                        ),
+                            justify='center'),
                         dbc.Row([dbc.Col([
                             dbc.Card(
                                 id='parameter_card1',
@@ -597,7 +597,7 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                                             ),
                                             dbc.Row(id='param_infos2')],
                                     )]),
-                        ),
+                            justify='center'),
                         dbc.Row([dbc.Col([
                             dbc.Card(
                                 id='parameter_card2',
@@ -1690,7 +1690,7 @@ def generate_div_graph(graph, graph_nr):
             dcc.Graph(
                 figure=graph
             ),
-            dbc.Row(id=str('param_infos'+str(graph_nr)))],
+            dbc.Row(id=str('param_infos' + str(graph_nr)), justify='center')],
     )
     return div_graph
 
@@ -1724,8 +1724,9 @@ def error_data_to_csv():
             y, errH1, n, t1 = heun(f, init_dict[i], 0, 10, 0.01, j, m, g)
             y, errH2, n, t1 = heun(f, init_dict[i], 0, 10, 0.001, j, m, g)
 
-            error_dict[str('Szenario '+str(i)+', '+adStep_dict[j]+', h=0.01')] = [errFE1, errBE1, errRK1, errH1]
-            error_dict[str('Szenario '+str(i)+', '+adStep_dict[j]+', h=0.001')] = [errFE2, errBE2, errRK2, errH2]
+            error_dict[str('Szenario ' + str(i) + ', ' + adStep_dict[j] + ', h=0.01')] = [errFE1, errBE1, errRK1, errH1]
+            error_dict[str('Szenario ' + str(i) + ', ' + adStep_dict[j] + ', h=0.001')] = [errFE2, errBE2, errRK2,
+                                                                                           errH2]
             print(error_dict)
 
     error_data = pd.DataFrame(data=error_dict, index=['Explicit Euler', 'Implicit Euler', 'Runge-Kutta', 'Heun'])
