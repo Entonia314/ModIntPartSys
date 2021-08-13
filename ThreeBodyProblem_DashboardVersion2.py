@@ -1314,26 +1314,26 @@ def newton_raphson(f, g, x0, e, N):
     :param x0: Float, initial guess
     :param e: Float, tolerable error
     :param N: Integer, maximal steps
-    :return:
+    :return: float, solution of equation
     """
     step = 1
     flag = 1
-    condition = True
-    while condition:
+    x1 = x0 - f(x0) / g(x0)
+    while np.any(abs(f(x1)) > e):
         if np.all(g(x0) == 0.0):
-            print('Divide by zero error!')
+            print('Divide by zero!')
             break
         x1 = x0 - f(x0) / g(x0)
         x0 = x1
         step = step + 1
         if step > N:
             flag = 0
+            print('Too many steps needed.')
             break
-        condition = np.any(abs(f(x1)) > e)
     if flag == 1:
         return x1
     else:
-        print('\nNot Convergent.')
+        print('Not Convergent.')
 
 
 def backward_euler(f, y0, t0, t1, h, ad_step, mass, g):
@@ -1358,8 +1358,7 @@ def backward_euler(f, y0, t0, t1, h, ad_step, mass, g):
     v[:, 0, :] = y0[:, 1, :]
     y[:, 0, :] = y0[:, 0, :]
     eps = 5e-16
-    t = t0
-    errlist = []
+    error_list = []
     while k < 50001 and h_sum < t1:
 
         for i in range(len(y0)):
@@ -1390,7 +1389,7 @@ def backward_euler(f, y0, t0, t1, h, ad_step, mass, g):
         energy = norm(
             mass[0] * f(y[:, k, :], mass, g)[0] + mass[1] * f(y[:, k, :], mass, g)[1] + mass[2] *
             f(y[:, k, :], mass, g)[2])
-        errlist.append(energy)
+        error_list.append(energy)
 
         if ad_step == 1:
 
@@ -1411,9 +1410,9 @@ def backward_euler(f, y0, t0, t1, h, ad_step, mass, g):
     y = y[:, :k, :]
 
     print('Backward Euler k: ', k)
-    print('Maximaler Error Backward Euler: ', max(errlist))
+    print('Maximaler Error Backward Euler: ', max(error_list))
 
-    return y, errlist, k - 1, h_sum
+    return y, error_list, k - 1, h_sum
 
 
 def predictor_corrector(f, y0, t0, t1, h, ad_step, mass, g):
@@ -1497,7 +1496,7 @@ def heun(f, y0, t0, t1, h, ad_step, mass, g):
     h_min = h / 256
     h_max = h
     k = 1
-    errlist = [0]
+    error_list = [0]
     eps = 5e-16
     while h_sum < t1 and k < 50001:
 
@@ -1511,7 +1510,7 @@ def heun(f, y0, t0, t1, h, ad_step, mass, g):
         err = norm(
             mass[0] * f(y[:, k, :], mass, g)[0] + mass[1] * f(y[:, k, :], mass, g)[1] + mass[2] *
             f(y[:, k, :], mass, g)[2])
-        errlist.append(err)
+        error_list.append(err)
 
         if ad_step == 1:
             if err < eps:
@@ -1532,10 +1531,10 @@ def heun(f, y0, t0, t1, h, ad_step, mass, g):
         t = t + h
     y = y[:, :k, :]
     print('Heun k: ', k)
-    max_error = max(errlist)
+    max_error = max(error_list)
     print('Maximaler Error Heun: ', max_error)
 
-    return y, errlist, k - 1, h_sum
+    return y, error_list, k - 1, h_sum
 
 
 def generate_figures(method, title, names, colours, colours_marker):
