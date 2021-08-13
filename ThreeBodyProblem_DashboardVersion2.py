@@ -1224,7 +1224,7 @@ def runge_kutta_4(f, y0, t0, t1, h, ad_step, mass, g):
     :param t0: float or int, start of interval for parameter t
     :param t1: float or int, end of interval for parameter t
     :param h: float, step-size
-    :param ad_step: int, 0 if adaptive step size is deactivated and 1 if it activated
+    :param ad_step: int, 0 if adaptive step size is deactivated and 1 if it is activated
     :param mass: list of floats or ints, masses of particles
     :param g: float or int, gravitational constant
     :return: list of postitions, list of approximated errors at each step, number of steps, total time
