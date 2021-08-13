@@ -215,7 +215,7 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                                 matching tab on the right card to choose parameters. The step size means the fineness 
                                 of the discretisation for the numerical approximation. A smaller step size will lead 
                                 to better results but demands higher computing capacity, so the calculation will need 
-                                some time (the tab in the browser says "Updating" while still computing). For an 
+                                some time. For an 
                                 automatic adaption of the step size, the "Adaptive Step Size" can be ticked. Here, 
                                 the numerical error of the calculation is approximated and the step size is 
                                 accordingly scaled down or up. In the graphs, the translucent points mark the 
@@ -283,7 +283,7 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                                             {'label': 'Implicit Euler', 'value': 'backwardeuler'},
                                             {'label': 'Runge-Kutta', 'value': 'rungekutta'},
                                             {'label': 'Heun', 'value': 'heun'}],
-                                        value='rungekutta',
+                                        value='forwardeuler',
                                         style={},
                                         clearable=False,
                                         searchable=False,
@@ -1142,7 +1142,7 @@ def forward_euler(f, y0, t0, t1, h, ad_step, mass, g):
     eps = 1e-15
     while h_sum < t1 and k < 50000:
 
-        y[:, k + 1, :] = y[:, k, :] + h * v[:, k, :]  # + h**2 * 0.5 * f(t, y[:, k, :])
+        y[:, k + 1, :] = y[:, k, :] + h * v[:, k, :] + h**2 * 0.5 * f(y[:, k, :], mass, g)
         v[:, k + 1, :] = v[:, k, :] + h * f(y[:, k, :], mass, g)
 
         energy = norm(
@@ -1385,7 +1385,7 @@ def backward_euler(f, y0, t0, t1, h, ad_step, mass, g):
                 return h * (terms[0] + terms[1]) - 1
 
             v[i, k, :] = newton_raphson(fixpoint, fixpoint_deriv, y[:, k - 1, :], 0.0001, 5)[i, :]
-            y[i, k, :] = y[i, k - 1, :] + h * v[i, k - 1, :]  # + h ** 2 * 0.5 * f(t, y[:, k - 1, :])[i]
+            y[i, k, :] = y[i, k - 1, :] + h * v[i, k - 1, :] + h ** 2 * 0.5 * f(y[:, k - 1, :], mass, g)[i]
 
         energy = norm(
             mass[0] * f(y[:, k, :], mass, g)[0] + mass[1] * f(y[:, k, :], mass, g)[1] + mass[2] *

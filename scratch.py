@@ -601,6 +601,96 @@ def forward_euler(f, y0, t0, t1, h, ad_step):
     return y, max_error
 
 
+def runge_kutta_4(f, y0, t0, t1, h, ad_step, mass, g):
+    """
+    Runge-Kutta-Fehlberg method for systems of differential equations: y' = f(t, y); with f,y,y' n-dimensional vectors.
+    :param f: list of functions
+    :param y0: list of floats or ints, initial values y(t0)=y0
+    :param t0: float or int, start of interval for parameter t
+    :param t1: float or int, end of interval for parameter t
+    :param h: float, step-size
+    :param ad_step: int, 0 if adaptive step size is deactivated and 1 if it activated
+    :param mass: list of floats or ints, masses of particles
+    :param g: float or int, gravitational constant
+    :return: list of postitions, list of approximated errors at each step, number of steps, total time
+    """
+    h_min = h / 16
+    h_max = h
+    h_sum = 0
+    eps = 1e-16
+    t = t0
+    v = np.zeros((len(y0), 50001, 2))
+    y = np.zeros((len(y0), 50001, 2))
+    v[:, 0, :] = y0[:, 1, :]
+    y[:, 0, :] = y0[:, 0, :]
+    k = 0
+    errlist = []
+    while k < 50000 and h_sum < t1:
+        i = 0
+
+        l1_all = np.zeros((3, 2))
+        l2_all = np.zeros((3, 2))
+        l3_all = np.zeros((3, 2))
+        l4_all = np.zeros((3, 2))
+        l5_all = np.zeros((3, 2))
+        l6_all = np.zeros((3, 2))
+
+        while i < (len(y0)):
+            k1 = h * f(y[:, k, :], mass, g)[i]
+            k2 = h * f((y[:, k, :] + B[1, 0] * h * k1), mass, g)[i]
+            k3 = h * f((y[:, k, :] + B[2, 0] * k1 + B[2, 1] * k2), mass, g)[i]
+            k4 = h * f((y[:, k, :] + B[3, 0] * k1 + B[3, 1] * k2 + B[3, 2] * k3), mass, g)[i]
+            k5 = h * f((y[:, k, :] + B[4, 0] * k1 + B[4, 1] * k2 + B[4, 2] * k3 + B[4, 3] * k4), mass, g)[i]
+            k6 = h * f(
+                (y[:, k, :] + B[5, 0] * k1 + B[5, 1] * k2 + B[5, 2] * k3 + B[5, 3] * k4 + B[5, 4] * k5), mass, g)[i]
+            v[i, k + 1] = v[i, k] + CH[0] * k1 + CH[1] * k2 + CH[2] * k3 + CH[3] * k4 + CH[4] * k5 + CH[5] * k6
+
+            l1 = v[i, k, :]
+            l2 = v[i, k, :] + B[1, 0] * h * k1
+            l3 = v[i, k, :] + B[2, 0] * k1 + B[2, 1] * k2
+            l4 = v[i, k, :] + B[3, 0] * k1 + B[3, 1] * k2 + B[3, 2] * k3
+            l5 = v[i, k, :] + B[4, 0] * k1 + B[4, 1] * k2 + B[4, 2] * k3 + B[4, 3] * k4
+            l6 = v[i, k, :] + B[5, 0] * k1 + B[5, 1] * k2 + B[5, 2] * k3 + B[5, 3] * k4 + B[5, 4] * k5
+            y[i, k + 1] = y[i, k] + h * CH[0] * l1 + h * CH[1] * l2 + h * CH[2] * l3 + h * CH[3] * l4 + h * CH[
+                4] * l5 + h * CH[5] * l6 + h ** 2 * 0.5 * f(y[:, k, :], mass, g)[i]
+
+            l1_all[i, :] = l1
+            l2_all[i, :] = l2
+            l3_all[i, :] = l3
+            l4_all[i, :] = l4
+            l5_all[i, :] = l5
+            l6_all[i, :] = l6
+
+            i += 1
+
+        TE = norm(
+            CT[0] * l1_all + CT[1] * l2_all + CT[2] * l3_all + CT[3] * l4_all + CT[4] * l5_all + CT[5] * l6_all)
+        errlist.append(TE)
+
+        if ad_step == 1:
+
+            if TE < eps:
+                k += 1
+                h_sum = h_sum + h
+                if TE < eps ** 2 and h < h_max:
+                    h = h * 1.1
+            elif TE > eps and h > h_min:
+                h = h * 0.9 * (eps / TE) ** 0.2
+            else:
+                k += 1
+                h_sum = h_sum + h
+
+        else:
+            k += 1
+            h_sum = h_sum + h
+
+    print('RK4 k: ', k)
+    print('Maximaler Error RKF: ', max(errlist))
+
+    y = y[:, :k + 1, :]
+    return y, errlist, k, h_sum
+
+
 y = forward_euler(f, inits1, 0, 10, 0.01, 1)
 #print(y)
 
