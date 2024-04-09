@@ -18,6 +18,7 @@ import plotly.express as px
 from dash.dependencies import Input, Output, State
 import SupplementaryFiles.dash_reusable_components as drc
 import time
+import imageio
 
 t_start = 0
 mass = [1, 1, 1]
@@ -194,12 +195,12 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                         dbc.Collapse(
                             dbc.Card(dbc.CardBody(children=[
                                 html.H4('Three-Body Problem', style={'text-align': ''}),
-                                html.P(children=['''Knowing the masses, initial positions and initial velocities of three 
-                                        particles, one wants to deduce their positions at any later time. Since this 
-                                        system of 
-                                        ordinary differential equations cannot be solved analytically, four different 
-                                        methods of numerical integration 
-                                        were implemented. This dashboard means to compare the methods and show some 
+                                html.P(children=['''Knowing the masses, initial positions and initial velocities of three
+                                        particles, one wants to deduce their positions at any later time. Since this
+                                        system of
+                                        ordinary differential equations cannot be solved analytically, four different
+                                        methods of numerical integration
+                                        were implemented. This dashboard means to compare the methods and show some
                                         interesting results and orbits. To learn more about the theory of the problem,
                                         see the essay in the ''',
                                                  html.A('GitHub', href='https://github.com/Entonia314/ModIntPartSys'),
@@ -208,22 +209,22 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                                                                                                       '50px'}),
 
                                 html.H4('Using the Dashboard', style={'text-align': ''}),
-                                html.P(children=['''There are two graphs to compare results, for each of them all 
-                                parameters can be chosen independently. The left card contains general options while 
-                                the right one holds model-specific parameters. Two types of models are implemented: a 
-                                simplified one and a simulation of the sun system with three celestial bodies at 
-                                once. To switch models, tick the respective one in the left card and and go to the 
-                                matching tab on the right card to choose parameters. The step size means the fineness 
-                                of the discretisation for the numerical approximation. A smaller step size will lead 
-                                to better results but demands higher computing capacity, so the calculation will need 
-                                some time. For an 
-                                automatic adaption of the step size, the "Adaptive Step Size" can be ticked. Here, 
-                                the numerical error of the calculation is approximated and the step size is 
-                                accordingly scaled down or up. In the graphs, the translucent points mark the 
-                                initial positions of the particles. To see an animation of the route of the 
-                                particles, press the "Play" button next to the graph. Since animations are a rather 
-                                new feature of Plotly, they are a bit buggy. If one wants to change parameters while 
-                                the animation is still running, please press "Pause" before changing. The particles 
+                                html.P(children=['''There are two graphs to compare results, for each of them all
+                                parameters can be chosen independently. The left card contains general options while
+                                the right one holds model-specific parameters. Two types of models are implemented: a
+                                simplified one and a simulation of the sun system with three celestial bodies at
+                                once. To switch models, tick the respective one in the left card and and go to the
+                                matching tab on the right card to choose parameters. The step size means the fineness
+                                of the discretisation for the numerical approximation. A smaller step size will lead
+                                to better results but demands higher computing capacity, so the calculation will need
+                                some time. For an
+                                automatic adaption of the step size, the "Adaptive Step Size" can be ticked. Here,
+                                the numerical error of the calculation is approximated and the step size is
+                                accordingly scaled down or up. In the graphs, the translucent points mark the
+                                initial positions of the particles. To see an animation of the route of the
+                                particles, press the "Play" button next to the graph. Since animations are a rather
+                                new feature of Plotly, they are a bit buggy. If one wants to change parameters while
+                                the animation is still running, please press "Pause" before changing. The particles
                                 will continue their route with new parameters if "Play" is pressed again. See the ''',
                                                  html.A('GitHub', href='https://github.com/Entonia314/ModIntPartSys'),
                                                  ''' repository for the code of the program.''',
@@ -300,7 +301,7 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                                         style={'margin': '10px 10px 10px 10px'},
                                     ),
                                     drc.NamedDropdown(
-                                        name='Stepsize',
+                                        name='Step Size',
                                         id='h-dropdown1',
                                         options=[
                                             {
@@ -629,7 +630,7 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
                                         style={'margin': '10px 10px 10px 10px'},
                                     ),
                                     drc.NamedDropdown(
-                                        name='Stepsize',
+                                        name='Step Size',
                                         id='h-dropdown2',
                                         options=[
                                             {
@@ -900,7 +901,7 @@ app.layout = dbc.Container(fluid=True, style={'background-color': '#333399'}, ch
         ),
 
         html.Footer(
-            html.Div('Project for the course "Modelling interacting particle systems in science".',
+            html.Div('Project for the seminar "Mathematical/Computational Astro/Quantum Physics".',
                      style={
                          'text-decoration': 'none',
                          'color': 'white',
@@ -1143,7 +1144,7 @@ def forward_euler(f, y0, t0, t1, h, ad_step, mass, g):
     eps = 1e-15
     while h_sum < t1 and k < 50000:
 
-        y[:, k + 1, :] = y[:, k, :] + h * v[:, k, :] + h**2 * 0.5 * f(y[:, k, :], mass, g)
+        y[:, k + 1, :] = y[:, k, :] + h * v[:, k, :] + h ** 2 * 0.5 * f(y[:, k, :], mass, g)
         v[:, k + 1, :] = v[:, k, :] + h * f(y[:, k, :], mass, g)
 
         energy = norm(
@@ -1225,7 +1226,7 @@ def runge_kutta_4(f, y0, t0, t1, h, ad_step, mass, g):
     :param t0: float or int, start of interval for parameter t
     :param t1: float or int, end of interval for parameter t
     :param h: float, step-size
-    :param ad_step: int, 0 if adaptive step size is deactivated and 1 if it is activated
+    :param ad_step: int, 0 if adaptive step size is deactivated and 1 if it activated
     :param mass: list of floats or ints, masses of particles
     :param g: float or int, gravitational constant
     :return: list of postitions, list of approximated errors at each step, number of steps, total time
@@ -1315,26 +1316,26 @@ def newton_raphson(f, g, x0, e, N):
     :param x0: Float, initial guess
     :param e: Float, tolerable error
     :param N: Integer, maximal steps
-    :return: float, solution of equation
+    :return:
     """
     step = 1
     flag = 1
-    x1 = x0 - f(x0) / g(x0)
-    while np.any(abs(f(x1)) > e):
+    condition = True
+    while condition:
         if np.all(g(x0) == 0.0):
-            print('Divide by zero!')
+            print('Divide by zero error!')
             break
         x1 = x0 - f(x0) / g(x0)
         x0 = x1
         step = step + 1
         if step > N:
             flag = 0
-            print('Too many steps needed.')
             break
+        condition = np.any(abs(f(x1)) > e)
     if flag == 1:
         return x1
     else:
-        print('Not Convergent.')
+        print('\nNot Convergent.')
 
 
 def backward_euler(f, y0, t0, t1, h, ad_step, mass, g):
@@ -1359,7 +1360,8 @@ def backward_euler(f, y0, t0, t1, h, ad_step, mass, g):
     v[:, 0, :] = y0[:, 1, :]
     y[:, 0, :] = y0[:, 0, :]
     eps = 5e-16
-    error_list = []
+    t = t0
+    errlist = []
     while k < 50001 and h_sum < t1:
 
         for i in range(len(y0)):
@@ -1390,7 +1392,7 @@ def backward_euler(f, y0, t0, t1, h, ad_step, mass, g):
         energy = norm(
             mass[0] * f(y[:, k, :], mass, g)[0] + mass[1] * f(y[:, k, :], mass, g)[1] + mass[2] *
             f(y[:, k, :], mass, g)[2])
-        error_list.append(energy)
+        errlist.append(energy)
 
         if ad_step == 1:
 
@@ -1411,9 +1413,9 @@ def backward_euler(f, y0, t0, t1, h, ad_step, mass, g):
     y = y[:, :k, :]
 
     print('Backward Euler k: ', k)
-    print('Maximaler Error Backward Euler: ', max(error_list))
+    print('Maximaler Error Backward Euler: ', max(errlist))
 
-    return y, error_list, k - 1, h_sum
+    return y, errlist, k - 1, h_sum
 
 
 def predictor_corrector(f, y0, t0, t1, h, ad_step, mass, g):
@@ -1497,7 +1499,7 @@ def heun(f, y0, t0, t1, h, ad_step, mass, g):
     h_min = h / 256
     h_max = h
     k = 1
-    error_list = [0]
+    errlist = [0]
     eps = 5e-16
     while h_sum < t1 and k < 50001:
 
@@ -1511,7 +1513,7 @@ def heun(f, y0, t0, t1, h, ad_step, mass, g):
         err = norm(
             mass[0] * f(y[:, k, :], mass, g)[0] + mass[1] * f(y[:, k, :], mass, g)[1] + mass[2] *
             f(y[:, k, :], mass, g)[2])
-        error_list.append(err)
+        errlist.append(err)
 
         if ad_step == 1:
             if err < eps:
@@ -1532,10 +1534,10 @@ def heun(f, y0, t0, t1, h, ad_step, mass, g):
         t = t + h
     y = y[:, :k, :]
     print('Heun k: ', k)
-    max_error = max(error_list)
+    max_error = max(errlist)
     print('Maximaler Error Heun: ', max_error)
 
-    return y, error_list, k - 1, h_sum
+    return y, errlist, k - 1, h_sum
 
 
 def generate_figures(method, title, names, colours, colours_marker):
@@ -1646,9 +1648,10 @@ def generate_figures(method, title, names, colours, colours_marker):
             showlegend=False
         )
     )
+    fig.update_layout(template="plotly_white")
     parameter_infos = [dbc.Col(html.Ul([
         html.Li(str('Mean Error: ' + str(np.mean(errlist)))),
-        html.Li(str('Max. Error: ' + str(max(errlist))))
+        html.Li(str('Max. Error: ' + str((max(errlist)))))
     ])),
         dbc.Col([html.Ul([
             html.Li(str('Total steps: ' + str(k))),
@@ -1660,6 +1663,7 @@ def generate_figures(method, title, names, colours, colours_marker):
 def fig_not_convergent(title):
     fig = px.scatter(x=[1, 1, 1, 1, 1, 1, 1, 1], y=[3, 2.75, 2.5, 2.25, 2, 1.75, 1.5, 0.75],
                      title=str(title + ': not convergent'))
+    fig.update_layout(template="plotly_white")
     dots = [html.Li('Not convergent!')]
     return fig, dots
 
@@ -1667,6 +1671,7 @@ def fig_not_convergent(title):
 def fig_empty():
     fig = px.scatter(x=[1, 1, 1, 1, 1, 1, 1, 1], y=[3, 2.75, 2.5, 2.25, 2, 1.75, 1.5, 0.75],
                      title='No method selected')
+    fig.update_layout(template="plotly_white")
     dots = []
     return fig, dots
 
@@ -1753,5 +1758,141 @@ def array_to_csv(y, name):
     return df
 
 
-if __name__ == '__main__':
-    app.run_server(debug=True, port=8050)
+filenames = []
+
+
+def generate_figure_frames(method, title, names, colours, colours_marker):
+    y, errlist, k, t_stop = method
+
+    for n in range(0, k + 1):
+        fig = go.Figure(
+            data=[go.Scatter(x=y[0, :, 0], y=y[0, :, 1],
+                             mode="lines", name=names[0], opacity=0.5,
+                             line=dict(width=2, color=colours[0]),
+                             showlegend=False),
+                  go.Scatter(x=y[1, :, 0], y=y[1, :, 1],
+                             mode="lines", name=names[1], opacity=0.5,
+                             line=dict(width=2, color=colours[1]),
+                             showlegend=False),
+                  go.Scatter(x=y[2, :, 0], y=y[2, :, 1],
+                             mode="lines", name=names[2], opacity=0.5,
+                             line=dict(width=2, color=colours[2]),
+                             showlegend=False),
+                  go.Scatter(x=y[0, :, 0], y=y[0, :, 1],
+                             mode="lines", opacity=0.5,
+                             line=dict(width=2, color=colours[0]),
+                             showlegend=False),
+                  go.Scatter(x=y[1, :, 0], y=y[1, :, 1],
+                             mode="lines", opacity=0.5,
+                             line=dict(width=2, color=colours[1]),
+                             showlegend=False),
+                  go.Scatter(x=y[2, :, 0], y=y[2, :, 1],
+                             mode="lines", opacity=0.5,
+                             line=dict(width=2, color=colours[2]),
+                             showlegend=False)
+                  ],
+            layout=go.Layout(
+                xaxis=dict(autorange=False, zeroline=False, range=[-1.1, 1.1]),
+                yaxis=dict(autorange=False, zeroline=False, range=[-0.6, 0.6]),
+                title=title, hovermode="closest", ),
+        )
+        fig.add_trace(
+            go.Scatter(
+                mode='markers',
+                x=[y[0, 0, 0]],
+                y=[y[0, 0, 1]],
+                name='Start Value',
+                opacity=0.5,
+                marker=dict(
+                    color=colours_marker[0],
+                    size=10,
+                    line=dict(
+                        color=colours[0],
+                        width=2
+                    )
+                ),
+                showlegend=False
+            ),
+        )
+        fig.add_trace(
+            go.Scatter(
+                mode='markers',
+                x=[y[1, 0, 0]],
+                y=[y[1, 0, 1]],
+                name='Start Value',
+                opacity=0.5,
+                marker=dict(
+                    color=colours_marker[1],
+                    size=10,
+                    line=dict(
+                        color=colours[1],
+                        width=2
+                    )
+                ),
+                showlegend=False
+            ),
+        )
+        fig.add_trace(
+            go.Scatter(
+                mode='markers',
+                x=[y[2, 0, 0]],
+                y=[y[2, 0, 1]],
+                name='Start Value',
+                opacity=0.5,
+                marker=dict(
+                    color=colours_marker[2],
+                    size=10,
+                    line=dict(
+                        color=colours[2],
+                        width=2
+                    )
+                ),
+                showlegend=False
+            )
+        )
+        fig.update_layout(template="plotly_white", title_x=0.5)
+        fig.update_xaxes(visible=False)
+        fig.update_yaxes(visible=False)
+
+        if n % 4 == 0:
+            fig.add_trace(go.Scatter(
+                x=[y[0, n, 0]],
+                y=[y[0, n, 1]],
+                mode="markers",
+                marker=dict(color=colours[0], size=10), showlegend=False),
+            )
+            fig.add_trace(go.Scatter(x=[y[1, n, 0]], y=[y[1, n, 1]],
+                                     mode="markers",
+                                     marker=dict(color=colours[1], size=10), showlegend=False))
+            fig.add_trace(go.Scatter(x=[y[2, n, 0]], y=[y[2, n, 1]],
+                                     mode="markers",
+                                     marker=dict(color=colours[2], size=10), showlegend=False))
+            fig.write_image(f"figure/frame{n}.png", scale=2)
+            filenames.append(f"figure/frame{n}.png")
+
+
+names = ['Body 1', 'Body 2', 'Body 3']
+colours = ['rgb(0, 51, 124)', 'rgb(28, 130, 173)', 'rgb(3, 201, 136)']
+colours_marker = ['rgb(0, 51, 124)', 'rgb(28, 130, 173)', 'rgb(3, 201, 136)']
+generate_figure_frames(runge_kutta_4(f, inits3, 0, 10, h=0.01, ad_step=0, mass=[1, 1, 1], g=1),
+                       'Figure-8 Configuration',
+                       names,
+                       colours, colours_marker)
+
+images = []
+for filename in filenames:
+    images.append(imageio.imread(filename))
+imageio.mimsave('C:/Users/AltonV/PycharmProjects/ModIntPartSys/figure/nbody.gif', images)
+
+"""for index, frame in enumerate(figure.frames):
+    if index % 10 == 0:
+        fig1 = go.Figure(frame.data)
+        fig1.add_trace(go.Scatter(figure.data))
+        fig1.update_layout(
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)')
+        # fig1.add_trace(go.Figure(frame.data))
+        fig1.write_image(f"figure/frame{index}.png")"""
+
+# if __name__ == '__main__':
+#   app.run_server(debug=True, port=8050)
